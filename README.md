@@ -1,10 +1,14 @@
 # mentor-club-react
+frontend for mentor-club
 
 [![build status][build badge]][BUILD_URL]
 [![coverage status][coverage badge]][COVERAGE_URL]
 [![codacy quality status][quality badge]][QUALITY_URL]
 
-## start the app
+
+## development
+
+### to start the app
 * run 
 ```
 cd application
@@ -20,3 +24,7 @@ yarn start
 [coverage badge]: https://img.shields.io/coveralls/github/ArtemAlagizov/mentor-club-react.svg?style=flat-square&color=brightgreen
 [QUALITY_URL]: https://www.codacy.com/manual/ArtemAlagizov/mentor-club-react
 [quality badge]: https://img.shields.io/codacy/grade/cd908732011c47bf831d2b661684babf?style=flat-square
+
+## deployment
+
+TODO
