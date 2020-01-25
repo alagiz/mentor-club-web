@@ -1,6 +1,6 @@
 # mentor-club-react
 
-# start the app
+## start the app
 * run 
 ```
 cd application
