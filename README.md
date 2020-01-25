@@ -10,12 +10,12 @@ frontend for mentor-club
 
 ### to start the app
 * run 
-```
-cd application
-yarn install
-yarn json-server
-yarn start
-```
+  ```sh
+  cd application
+  yarn install
+  yarn json-server
+  yarn start
+  ```
 * login with any credentials
 
 [BUILD_URL]: https://travis-ci.org/ArtemAlagizov/mentor-club-react
