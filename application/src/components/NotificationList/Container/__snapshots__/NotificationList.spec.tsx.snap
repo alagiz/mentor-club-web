@@ -1,0 +1,36 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Given a NotificationList when rendering should have NotificationListView matching snapshot 1`] = `
+<NotificationListView
+  deleteNotification={[MockFunction]}
+  notificationRenderer={[Function]}
+  notifications={
+    Array [
+      Object {
+        "notificationId": 1,
+        "payload": Object {
+          "mentorRequestId": "201",
+          "newStatus": "DONE",
+        },
+        "visible": true,
+      },
+      Object {
+        "notificationId": 2,
+        "payload": Object {
+          "mentorRequestId": "202",
+          "newStatus": "DONE",
+        },
+        "visible": true,
+      },
+      Object {
+        "notificationId": 3,
+        "payload": Object {
+          "mentorRequestId": "203",
+          "newStatus": "DONE",
+        },
+        "visible": true,
+      },
+    ]
+  }
+/>
+`;

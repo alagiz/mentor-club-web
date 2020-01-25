@@ -1,0 +1,13 @@
+{
+  "name": "mentor-club-root",
+  "version": "0.0.1",
+  "private": true,
+  "devDependencies": {
+    "husky": "^3.0.8"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "cd application && yarn lint-staged && cd ../integration-tests && yarn lint-staged"
+    }
+  }
+}

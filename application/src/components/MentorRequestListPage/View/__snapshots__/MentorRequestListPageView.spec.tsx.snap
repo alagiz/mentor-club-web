@@ -1,0 +1,23 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Given MentorRequestResultPageView when rendering should have MentorRequestResultPageView matching snapshot 1`] = `
+<styled.div>
+  <styled.div>
+    <h1>
+      Mentor request list
+    </h1>
+    <Link
+      to="/mentor-requests/new"
+    >
+      <button
+        data-id="new-mentor-request-button"
+      >
+        New mentor request
+      </button>
+    </Link>
+  </styled.div>
+  <div
+    data-id="mentor-request-list-table"
+  />
+</styled.div>
+`;

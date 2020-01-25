@@ -1,0 +1,40 @@
+{
+  "name": "mentor-club-integration-tests",
+  "version": "0.0.1",
+  "main": "index.js",
+  "license": "MIT",
+  "devDependencies": {
+    "@cypress/browserify-preprocessor": "^2.1.1",
+    "@types/cypress": "^1.1.3",
+    "@types/cypress-cucumber-preprocessor": "^1.12.0",
+    "@typescript-eslint/eslint-plugin": "^1.13.0",
+    "@typescript-eslint/parser": "^1.13.0",
+    "cypress": "^3.4.1",
+    "cypress-cucumber-preprocessor": "^1.16.0",
+    "eslint": "^5.16.0",
+    "eslint-config-prettier": "^6.4.0",
+    "eslint-plugin-cypress": "^2.6.0",
+    "eslint-plugin-prettier": "^3.1.1",
+    "lint-staged": "^9.4.2",
+    "prettier": "^1.18.2",
+    "tsify": "^4.0.1",
+    "typescript": "^3.6.3"
+  },
+  "scripts": {
+    "cypress:open": "cypress open",
+    "cypress:run": "cypress run",
+    "lint": "./node_modules/.bin/eslint src/**"
+  },
+  "lint-staged": {
+    "*.{js,ts}": "yarn lint"
+  },
+  "cypress-cucumber-preprocessor": {
+    "step_definitions": "src/steps",
+    "cucumberJson": {
+      "generate": true,
+      "outputFolder": "cypress/reports/cucumber",
+      "filePrefix": "",
+      "fileSuffix": ".cucumber"
+    }
+  }
+}

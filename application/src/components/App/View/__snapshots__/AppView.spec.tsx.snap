@@ -1,0 +1,38 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Given AppView when rendering should have AppView matching snapshot 1`] = `
+<BrowserRouter
+  basename="/mentor-club"
+>
+  <Connect(PrivateRoute)>
+    <Connect(AuthenticatedPage)
+      logout={[MockFunction]}
+    >
+      <Route
+        exact={true}
+        path="/"
+      >
+        <Redirect
+          to="/mentor-requests"
+        />
+      </Route>
+      <Route
+        exact={true}
+        path="/mentor-requests"
+      >
+        <Connect(MentorRequestListPage) />
+      </Route>
+      <Route
+        exact={true}
+        path="/mentor-requests/new"
+      />
+    </Connect(AuthenticatedPage)>
+  </Connect(PrivateRoute)>
+  <Route
+    exact={true}
+    path="/login"
+  >
+    <Connect(LoginPage) />
+  </Route>
+</BrowserRouter>
+`;

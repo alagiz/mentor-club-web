@@ -1,0 +1,19 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Given a AuthenticatedPageView when rendering should have AuthenticatedPageView matching snapshot 1`] = `
+<styled.div>
+  <styled.main>
+    <TopBar
+      logout={[MockFunction]}
+    />
+    <NotificationList
+      notificationRenderer={[Function]}
+    >
+      <styled.main>
+        <div />
+        <div />
+      </styled.main>
+    </NotificationList>
+  </styled.main>
+</styled.div>
+`;

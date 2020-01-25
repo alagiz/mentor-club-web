@@ -1,0 +1,23 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Given LoginPageView when rendering should have LoginFormView matching snapshot 1`] = `
+<styled.div>
+  <styled.div>
+    <div>
+      <header>
+        <styled.h1>
+          Mentor club
+          <styled.span>
+            v0.1
+          </styled.span>
+        </styled.h1>
+        <LoginForm
+          displayError={false}
+          isAuthenticating={false}
+          login={[MockFunction]}
+        />
+      </header>
+    </div>
+  </styled.div>
+</styled.div>
+`;
