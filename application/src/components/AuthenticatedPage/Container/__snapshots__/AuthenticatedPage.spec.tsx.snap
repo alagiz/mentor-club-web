@@ -32,5 +32,8 @@ exports[`Given a AuthenticatedPage when rendering should have AuthenticatedPage 
       },
     ]
   }
-/>
+>
+  <div />
+  <div />
+</AuthenticatedPageView>
 `;
