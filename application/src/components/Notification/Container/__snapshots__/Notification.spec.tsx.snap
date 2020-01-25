@@ -1,0 +1,21 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Given a Notification when rendering should have Notification matching snapshot 1`] = `
+<Transition
+  appear={false}
+  enter={true}
+  exit={true}
+  in={false}
+  mountOnEnter={false}
+  onEnter={[Function]}
+  onEntered={[Function]}
+  onEntering={[Function]}
+  onExit={[Function]}
+  onExited={[Function]}
+  onExiting={[Function]}
+  timeout={300}
+  unmountOnExit={false}
+>
+  <Component />
+</Transition>
+`;

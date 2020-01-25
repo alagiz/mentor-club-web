@@ -1,0 +1,19 @@
+{
+  "compileOnSave": false,
+  "compilerOptions": {
+    "baseUrl": "./",
+    "experimentalDecorators": true,
+    "target": "es5",
+    "strict": true,
+    "noImplicitAny": true,
+    "noImplicitThis": true,
+    "skipLibCheck": true,
+    "lib": ["es5", "dom"],
+    "types": ["Cypress", "node"]
+  },
+  "include": [
+    "node_modules/cypress/**/*.ts",
+    "cypress/**/*.ts",
+    "src/**/*.ts"
+  ]
+}

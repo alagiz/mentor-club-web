@@ -1,0 +1,33 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Given a TopBarView when rendering should have TopBarView matching snapshot 1`] = `
+<styled.header>
+  <styled.h1>
+    Mentor club
+  </styled.h1>
+  <styled.label />
+  <Popover
+    content={
+      <ForwardRef(styled.button)
+        data-id="top-bar-logout-button"
+        onClick={[MockFunction]}
+      >
+        Logout
+      </ForwardRef(styled.button)>
+    }
+    mouseEnterDelay={0.1}
+    mouseLeaveDelay={0.1}
+    overlayStyle={Object {}}
+    placement="top"
+    transitionName="zoom-big"
+    trigger="hover"
+  >
+    <styled.div>
+      <styled.img
+        data-id="top-bar-profile-image"
+        src={null}
+      />
+    </styled.div>
+  </Popover>
+</styled.header>
+`;

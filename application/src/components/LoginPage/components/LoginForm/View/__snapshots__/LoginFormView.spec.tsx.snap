@@ -1,0 +1,31 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Given LoginFormView when rendering should have LoginFormView matching snapshot 1`] = `
+<styled.form
+  onSubmit={[MockFunction]}
+>
+  <styled.input
+    data-id="login-email-input"
+    onChange={[MockFunction]}
+    placeholder="Enter email address"
+    type="text"
+    value="test@test.com"
+  />
+  <styled.input
+    data-id="login-password-input"
+    onChange={[MockFunction]}
+    placeholder="Enter password"
+    type="password"
+    value="fake"
+  />
+  <Styled(Button)
+    data-id="login-submit-button"
+    htmlType="submit"
+    loading={false}
+    size="large"
+    type="primary"
+  >
+    Login
+  </Styled(Button)>
+</styled.form>
+`;

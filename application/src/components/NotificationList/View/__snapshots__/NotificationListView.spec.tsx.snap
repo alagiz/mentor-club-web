@@ -1,0 +1,43 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Given a NotificationListView when rendering should have NotificationListView matching snapshot 1`] = `
+<Fragment>
+  <styled.div>
+    <TransitionGroup
+      childFactory={[Function]}
+      component="div"
+    >
+      <Notification
+        deleteNotification={[MockFunction]}
+        id={1}
+        key="1"
+      >
+        <div>
+          <Component />
+        </div>
+      </Notification>
+      <Notification
+        deleteNotification={[MockFunction]}
+        id={2}
+        key="2"
+      >
+        <div>
+          <Component />
+        </div>
+      </Notification>
+      <Notification
+        deleteNotification={[MockFunction]}
+        id={3}
+        key="3"
+      >
+        <div>
+          <Component />
+        </div>
+      </Notification>
+    </TransitionGroup>
+  </styled.div>
+  <p>
+    Fake Children
+  </p>
+</Fragment>
+`;

@@ -1,0 +1,49 @@
+{
+  "general": {
+    "applicationTitle": "Mentor club",
+    "versionNumber": "v0.1",
+    "logoutButton": "Logout",
+    "returnToMentorRequestListPage": "Return to mentor request list"
+  },
+  "dropdown": {
+    "placeholderPrefix": "Choose"
+  },
+  "loginPage": {
+    "enterEmail": "Enter email address",
+    "enterPassword": "Enter password",
+    "invalidCredentials": "Invalid e-mail or password",
+    "login": "Login"
+  },
+  "mentorRequestListPage": {
+    "title": "Mentor request list",
+    "newMentorRequest": "New mentor request",
+    "noMentorRequestsFound": "There are no mentor requests"
+  },
+  "mentorRequestCreationPage": {
+    "title": "New mentor request",
+    "backToMentorRequestList": "Back to mentor request list"
+  },
+  "mentorRequestResultPage": {
+    "title": "Mentor request result",
+    "returnToMentorRequestList": "Return to mentor request list",
+    "mentorRequestResultMetaData": {
+      "mentorRequestId": "MentorRequest ID",
+      "status": "Status"
+    }
+  },
+  "mentorRequests": {
+    "mentorRequestId": "Mentor request ID",
+    "status": "Status",
+    "statuses": {
+      "created": "Created",
+      "inProgress": "Pending",
+      "failed": "Failed",
+      "done": "Done",
+      "unknown": "Unknown"
+    }
+  },
+  "notifications": {
+    "mentorRequestUpdated": "MentorRequest with id {{mentorRequestId}} has updated to status {{newStatus}}",
+    "viewMentorRequest": "View mentor request"
+  }
+}
