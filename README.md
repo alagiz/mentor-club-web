@@ -2,6 +2,7 @@
 
 [![build status][build badge]][BUILD_URL]
 [![coverage status][coverage badge]][COVERAGE_URL]
+[![codacy quality status][quality badge]][QUALITY_URL]
 
 ## start the app
 * run 
@@ -17,3 +18,5 @@ yarn start
 [build badge]: https://img.shields.io/travis/ArtemAlagizov/mentor-club-react/master?style=flat-square
 [COVERAGE_URL]: https://coveralls.io/github/ArtemAlagizov/mentor-club-react?branch=master
 [coverage badge]: https://img.shields.io/coveralls/github/ArtemAlagizov/mentor-club-react.svg?style=flat-square&color=brightgreen
+[QUALITY_URL]: https://www.codacy.com/manual/ArtemAlagizov/mentor-club-react
+[quality badge]: https://img.shields.io/codacy/grade/cd908732011c47bf831d2b661684babf?style=flat-square
