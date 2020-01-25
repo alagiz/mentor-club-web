@@ -3,7 +3,6 @@
 exports[`Given an MentorRequestListPage should have MentorRequestResultPage matching snapshot 1`] = `
 <MentorRequestListPageView
   error={null}
-  handleRowClick={[Function]}
   isLoading={false}
   mentorRequests={Array []}
 />

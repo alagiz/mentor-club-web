@@ -10,7 +10,9 @@ const state = {
 describe("selectVisibleNotifications", () => {
   it("should return the visible notifications", () => {
     expect(selectVisibleNotifications(state)).toEqual(
-      mockNotifications.filter((item: IMentorRequestStatusNotification) => item.visible)
+      mockNotifications.filter(
+        (item: IMentorRequestStatusNotification) => item.visible
+      )
     );
   });
 });

@@ -16,7 +16,7 @@ export const LoginFormButton = styled(Button)`
   }
   &:active {
     background: ${buttonColorOnFocus};
-  }  
+  }
   &:focus {
     background: ${buttonColorOnFocus};
   }

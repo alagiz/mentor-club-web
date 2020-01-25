@@ -10,7 +10,6 @@ describe("Given MentorRequestResultPageView", () => {
           isLoading={false}
           error={null}
           mentorRequests={[]}
-          handleRowClick={jest.fn()}
         />
       );
 

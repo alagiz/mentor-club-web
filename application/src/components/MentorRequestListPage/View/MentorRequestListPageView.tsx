@@ -3,19 +3,13 @@ import translator from "../../../config/i18next";
 import { Styled } from "../Styled";
 import { Link } from "react-router-dom";
 import { IMentorRequestListPageViewProps } from "./IMentorRequestListPageViewProps";
-import { translateMentorRequestStatus } from "../../../service/MentorRequestStatusHelper/MentorRequestStatusHelper";
 import { Alert, Spin } from "antd";
 
 const MentorRequestListPageView: React.FC<IMentorRequestListPageViewProps> = ({
-  handleRowClick,
   mentorRequests,
   isLoading,
   error
 }) => {
-  const StatusCell: React.FC<{ rowData: any }> = ({ rowData }) => {
-    return <>{translateMentorRequestStatus(rowData.status)}</>;
-  };
-
   return (
     <Styled.Container>
       <Styled.TopHeader>

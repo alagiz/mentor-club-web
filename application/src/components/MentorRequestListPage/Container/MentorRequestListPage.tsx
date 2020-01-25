@@ -1,6 +1,5 @@
 import React, { useEffect } from "react";
 import { connect } from "react-redux";
-import { useHistory } from "react-router-dom";
 import MentorRequestListPageView from "../View/MentorRequestListPageView";
 import { fetchMentorRequestsBegin } from "../../../state/MentorRequests/actions";
 import { IAppState } from "../../../store";
@@ -17,22 +16,15 @@ export const MentorRequestListPage: React.FC<IMentorRequestListPageProps> = ({
   isLoading,
   error
 }) => {
-  const history = useHistory();
-
   useEffect(() => {
     fetchMentorRequestsBegin();
   }, [fetchMentorRequestsBegin]);
-
-  const handleRowClick = (key: string) => {
-    history.push(`/mentor-requests/${key}/result`);
-  };
 
   return (
     <MentorRequestListPageView
       mentorRequests={mentorRequests}
       isLoading={isLoading}
       error={error}
-      handleRowClick={handleRowClick}
     />
   );
 };
