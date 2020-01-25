@@ -11,7 +11,8 @@ describe("Given a AuthenticatedPage", () => {
           notifications={mockNotifications}
           deleteNotification={jest.fn()}
           logout={jest.fn()}
-          children={[]}/>
+          children={[]}
+        />
       );
 
       expect(authenticatedPage).toMatchSnapshot();

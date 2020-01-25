@@ -31,7 +31,4 @@ export const mapDispatchToProps = {
   deleteNotification
 };
 
-export default connect(
-  mapStateToProps,
-  mapDispatchToProps
-)(AuthenticatedPage);
+export default connect(mapStateToProps, mapDispatchToProps)(AuthenticatedPage);

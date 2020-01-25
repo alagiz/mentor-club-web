@@ -19,7 +19,4 @@ export const mapDispatchToProps = {
   appStarted
 } as const;
 
-export default connect(
-  null,
-  mapDispatchToProps
-)(App);
+export default connect(null, mapDispatchToProps)(App);

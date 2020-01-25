@@ -1,9 +1,7 @@
 import { Selector } from "../../types/Selector";
 import { IMentorRequestStatusNotification } from "./types";
 
-export const selectVisibleNotifications: Selector<
-  IMentorRequestStatusNotification[]
-> = state =>
+export const selectVisibleNotifications: Selector<IMentorRequestStatusNotification[]> = state =>
   state.notifications.notificationQueue.filter(
     (item: IMentorRequestStatusNotification) => item.visible
   );

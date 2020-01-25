@@ -45,7 +45,4 @@ export const mapDispatchToProps = {
   authenticateBegin
 } as const;
 
-export default connect(
-  mapStateToProps,
-  mapDispatchToProps
-)(LoginPage);
+export default connect(mapStateToProps, mapDispatchToProps)(LoginPage);
