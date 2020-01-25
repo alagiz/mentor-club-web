@@ -1,7 +1,7 @@
 import styled from "styled-components";
 import { borderRadius, borderWidth } from "styles/variables/borders";
 
-const loginFormWidth = "24rem";
+const loginFormWidth = "20rem";
 
 export const LoginFormInput = styled.input`
   display: block;
