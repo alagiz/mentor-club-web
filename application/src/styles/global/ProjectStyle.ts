@@ -5,4 +5,10 @@ export const ProjectStyle = createGlobalStyle`
         font-size: 10px;
         margin-bottom: 10px;
     }
+    
+    body {
+        .ant-popover-inner {
+            border-radius: 0;
+        }
+    }
 `;
