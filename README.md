@@ -1,5 +1,7 @@
 # mentor-club-react
 
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/6f1d4d0667094e538341bd77f21af291)](https://app.codacy.com/manual/ArtemAlagizov/mentor-club-react?utm_source=github.com&utm_medium=referral&utm_content=ArtemAlagizov/mentor-club-react&utm_campaign=Badge_Grade_Dashboard)
+
 [![build status][build badge]][BUILD_URL]
 [![coverage status][coverage badge]][COVERAGE_URL]
 
