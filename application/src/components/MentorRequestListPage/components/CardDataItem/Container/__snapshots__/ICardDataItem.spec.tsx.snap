@@ -1,0 +1,8 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Given a CardDataItem when rendering should have CardDataItem matching snapshot 1`] = `
+<CardDataItemView
+  label=""
+  value=""
+/>
+`;
