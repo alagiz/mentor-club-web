@@ -9,11 +9,24 @@ exports[`Given MentorRequestResultPageView when rendering should have MentorRequ
     <Link
       to="/mentor-requests/new"
     >
-      <button
+      <Button
+        block={false}
         data-id="new-mentor-request-button"
+        ghost={false}
+        htmlType="button"
+        loading={false}
+        style={
+          Object {
+            "borderRadius": "0",
+            "color": "white",
+            "marginRight": "5px",
+            "width": "100%",
+          }
+        }
+        type="ghost"
       >
         New mentor request
-      </button>
+      </Button>
     </Link>
   </styled.div>
   <div
