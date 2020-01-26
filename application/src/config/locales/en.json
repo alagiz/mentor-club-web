@@ -3,6 +3,7 @@
     "applicationTitle": "Mentor club",
     "versionNumber": "v0.1",
     "logoutButton": "Logout",
+    "profile": "Profile",
     "returnToMentorRequestListPage": "Return to mentor request list"
   },
   "dropdown": {

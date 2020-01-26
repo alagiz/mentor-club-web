@@ -8,12 +8,19 @@ exports[`Given a TopBarView when rendering should have TopBarView matching snaps
   <styled.label />
   <Popover
     content={
-      <ForwardRef(styled.button)
-        data-id="top-bar-logout-button"
-        onClick={[MockFunction]}
-      >
-        Logout
-      </ForwardRef(styled.button)>
+      <ForwardRef(styled.div)>
+        <ForwardRef(styled.div)
+          data-id="top-bar-profile-button"
+        >
+          Profile
+        </ForwardRef(styled.div)>
+        <ForwardRef(styled.div)
+          data-id="top-bar-logout-button"
+          onClick={[MockFunction]}
+        >
+          Logout
+        </ForwardRef(styled.div)>
+      </ForwardRef(styled.div)>
     }
     mouseEnterDelay={0.1}
     mouseLeaveDelay={0.1}

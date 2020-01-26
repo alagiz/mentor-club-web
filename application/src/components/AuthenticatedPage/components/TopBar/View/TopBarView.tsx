@@ -10,9 +10,14 @@ import { ITopBar } from "../Container/ITopBar";
 
 const TopBarView: React.FC<ITopBar> = ({ logout }) => {
   const content = (
-    <Styled.LogoutButton onClick={logout} data-id="top-bar-logout-button">
-      {translator.t("general.logoutButton")}
-    </Styled.LogoutButton>
+    <Styled.ProfileButtons>
+      <Styled.ProfileButton data-id="top-bar-profile-button">
+        {translator.t("general.profile")}
+      </Styled.ProfileButton>
+      <Styled.ProfileButton onClick={logout} data-id="top-bar-logout-button">
+        {translator.t("general.logoutButton")}
+      </Styled.ProfileButton>
+    </Styled.ProfileButtons>
   );
 
   return (

@@ -3,7 +3,13 @@ import { TopBarTitle } from "./TopBarTitle";
 import { UserImageContainer } from "./UserImageContainer";
 import { UserImage } from "./UserImage";
 import { UserName } from "./UserName";
-import { LogoutButton } from "./LogoutButton";
+import { ProfileButton } from "./ProfileButton";
+import styled from "styled-components";
+
+const ProfileButtons = styled.div`
+  display: flex;
+  flex-direction: column;
+`;
 
 export const Styled = {
   TopBar,
@@ -11,5 +17,6 @@ export const Styled = {
   UserName,
   UserImage,
   UserImageContainer,
-  LogoutButton
+  ProfileButton,
+  ProfileButtons
 };
