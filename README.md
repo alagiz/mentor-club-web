@@ -12,9 +12,9 @@ frontend for [mentor-club](https://github.com/ArtemAlagizov/mentor-club)
 * run 
   ```sh
   cd application
-  yarn install
-  yarn json-server
-  yarn start
+  yarn install # to install dependencies
+  yarn json-server # to start local server with mock data
+  yarn start # to start the app
   ```
 * login with any credentials
 
