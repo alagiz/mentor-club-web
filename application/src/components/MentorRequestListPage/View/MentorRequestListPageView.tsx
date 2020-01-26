@@ -19,9 +19,18 @@ const MentorRequestListPageView: React.FC<IMentorRequestListPageViewProps> = ({
           {translator.t("mentorRequestListPage.title")}
         </Styled.TopHeader>
         <Link to="/mentor-requests/new">
-          <button data-id="new-mentor-request-button">
+          <Button
+            type="ghost"
+            style={{
+              borderRadius: "0",
+              width: "100%",
+              marginRight: "5px",
+              color: "white"
+            }}
+            data-id="new-mentor-request-button"
+          >
             {translator.t("mentorRequestListPage.newMentorRequest")}
-          </button>
+          </Button>
         </Link>
       </Styled.TopHeaderContainer>
 
