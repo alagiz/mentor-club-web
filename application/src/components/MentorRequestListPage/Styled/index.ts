@@ -1,13 +1,46 @@
 import styled from "styled-components";
-import { TopHeader } from "./TopHeader";
 import { SpinnerBoundaries } from "./SpinnerBoundaries";
 
 const Container = styled.div`
-  padding: 20px;
+  padding: 15px;
+`;
+
+const MentorRequestList = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  padding-bottom: 20px;
+`;
+
+const CardContainer = styled.div`
+  padding: 10px;
+
+  .ant-card-bordered {
+    border: 0;
+  }
+`;
+
+const UserImage = styled.img`
+  margin-top: -3px;
+  width: 3rem;
+`;
+
+const TopHeaderContainer = styled.div`
+  display: flex;
+  justify-content: space-between;
+  color: white;
+`;
+
+const TopHeader = styled.div`
+  font-size: 20px;
+  color: white;
 `;
 
 export const Styled = {
   Container,
+  TopHeaderContainer,
   TopHeader,
-  SpinnerBoundaries
+  SpinnerBoundaries,
+  MentorRequestList,
+  CardContainer,
+  UserImage
 };

@@ -1,0 +1,9 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Given a Card when rendering should have Card matching snapshot 1`] = `
+<CardView
+  cardBodyFooter=""
+  cardDataItems={Array []}
+  cardTitle=""
+/>
+`;

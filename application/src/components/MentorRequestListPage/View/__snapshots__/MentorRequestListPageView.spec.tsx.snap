@@ -3,9 +3,9 @@
 exports[`Given MentorRequestResultPageView when rendering should have MentorRequestResultPageView matching snapshot 1`] = `
 <styled.div>
   <styled.div>
-    <h1>
+    <styled.div>
       Mentor request list
-    </h1>
+    </styled.div>
     <Link
       to="/mentor-requests/new"
     >
@@ -18,6 +18,8 @@ exports[`Given MentorRequestResultPageView when rendering should have MentorRequ
   </styled.div>
   <div
     data-id="mentor-request-list-table"
-  />
+  >
+    <styled.div />
+  </div>
 </styled.div>
 `;

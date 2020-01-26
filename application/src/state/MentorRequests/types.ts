@@ -6,12 +6,10 @@ export type IMentorRequestStatus =
 
 export interface IMentorRequest {
   mentorRequestId: string;
-  numberOfLots: number;
-  numberOfWafers: number;
-  durationInMinutes: number;
   status: IMentorRequestStatus;
-  startedAt: string;
-  endedAt: string;
+  requestDescription: string;
+  requesterName: string;
+  requesterPictureThumbnailSrc: string;
 }
 
 export interface IMentorRequestsState {

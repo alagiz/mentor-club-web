@@ -17,7 +17,12 @@
   "mentorRequestListPage": {
     "title": "Mentor request list",
     "newMentorRequest": "New mentor request",
-    "noMentorRequestsFound": "There are no mentor requests"
+    "noMentorRequestsFound": "There are no mentor requests",
+    "mentorRequest": {
+      "requesterName": "Name",
+      "requestDescription": "Description",
+      "requesterPictureThumbnailSrc": "Picture"
+    }
   },
   "mentorRequestCreationPage": {
     "title": "New mentor request",
