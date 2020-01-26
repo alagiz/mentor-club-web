@@ -5,7 +5,7 @@ import {
   listenToStatusNotifications
 } from "../sagas";
 import {
-  UPDATE_TASK_STATUS,
+  UPDATE_MENTOR_REQUEST_STATUS,
   updateMentorRequestStatus
 } from "../../MentorRequests/actions";
 import {
@@ -81,8 +81,10 @@ describe("Notifications sagas", () => {
   describe("listenToStatusNotifications saga", () => {
     const iterator: any = listenToStatusNotifications();
 
-    it("should listen for UPDATE_TASK_STATUS actions", () => {
-      expect(iterator.next().value).toStrictEqual(take(UPDATE_TASK_STATUS));
+    it("should listen for UPDATE_MENTOR_REQUEST_STATUS actions", () => {
+      expect(iterator.next().value).toStrictEqual(
+        take(UPDATE_MENTOR_REQUEST_STATUS)
+      );
     });
 
     it("should fork a create notification action", () => {
@@ -93,8 +95,10 @@ describe("Notifications sagas", () => {
       );
     });
 
-    it("should listen for another UPDATE_TASK_STATUS actions", () => {
-      expect(iterator.next().value).toStrictEqual(take(UPDATE_TASK_STATUS));
+    it("should listen for another UPDATE_MENTOR_REQUEST_STATUS actions", () => {
+      expect(iterator.next().value).toStrictEqual(
+        take(UPDATE_MENTOR_REQUEST_STATUS)
+      );
     });
 
     it("should fork a create notification action with incremented ID", () => {

@@ -1,7 +1,7 @@
 import { IMentorRequestStatus } from "../MentorRequests/types";
 
-export const CREATE_TASK_UPDATE_NOTIFICATION =
-  "notifications/CREATE_TASK_UPDATE_NOTIFICATION";
+export const CREATE_MENTOR_REQUEST_UPDATE_NOTIFICATION =
+  "notifications/CREATE_MENTOR_REQUEST_UPDATE_NOTIFICATION";
 export const SHOW_NOTIFICATION = "notifications/SHOW_NOTIFICATION";
 export const DELETE_NOTIFICATION = "notifications/DELETE_NOTIFICATION";
 
@@ -12,7 +12,7 @@ export const createMentorRequestUpdateNotification = (
   visible: boolean
 ) =>
   ({
-    type: CREATE_TASK_UPDATE_NOTIFICATION,
+    type: CREATE_MENTOR_REQUEST_UPDATE_NOTIFICATION,
     notificationId,
     mentorRequestId,
     newStatus,

@@ -1,6 +1,6 @@
 import { IMentorRequestStatusNotification, INotificationsState } from "./types";
 import {
-  CREATE_TASK_UPDATE_NOTIFICATION,
+  CREATE_MENTOR_REQUEST_UPDATE_NOTIFICATION,
   DELETE_NOTIFICATION,
   SHOW_NOTIFICATION,
   NotificationActionTypes
@@ -15,7 +15,7 @@ export const notificationsReducer = (
   action: NotificationActionTypes
 ): INotificationsState => {
   switch (action.type) {
-    case CREATE_TASK_UPDATE_NOTIFICATION:
+    case CREATE_MENTOR_REQUEST_UPDATE_NOTIFICATION:
       return {
         ...state,
         notificationQueue: [

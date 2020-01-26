@@ -1,65 +1,30 @@
 [
   {
     "mentorRequestId": "101",
-    "status": "DONE",
-    "numberOfLots": 1,
-    "numberOfWafers": 2,
-    "durationInMinutes": 5,
-    "startedAt": "14-Oct-2019 21:21",
-    "endedAt": "14-Oct-2019 21:21"
+    "status": "DONE"
   },
   {
     "mentorRequestId": "102",
-    "status": "DONE",
-    "numberOfLots": 2,
-    "numberOfWafers": 12,
-    "durationInMinutes": 22,
-    "startedAt": "14-Oct-2019 21:21",
-    "endedAt": "14-Oct-2019 21:21"
+    "status": "DONE"
   },
   {
     "mentorRequestId": "203",
-    "status": "IN_PROGRESS",
-    "numberOfLots": 2,
-    "numberOfWafers": 4,
-    "durationInMinutes": 11,
-    "startedAt": "14-Oct-2019 21:21",
-    "endedAt": "14-Oct-2019 21:21"
+    "status": "IN_PROGRESS"
   },
   {
     "mentorRequestId": "206",
-    "status": "IN_PROGRESS",
-    "numberOfLots": 1,
-    "numberOfWafers": 2,
-    "durationInMinutes": 23,
-    "startedAt": "14-Oct-2019 21:21",
-    "endedAt": "14-Oct-2019 21:21"
+    "status": "IN_PROGRESS"
   },
   {
     "mentorRequestId": "232",
-    "status": "IN_PROGRESS",
-    "numberOfLots": 1,
-    "numberOfWafers": 2,
-    "durationInMinutes": 23,
-    "startedAt": "14-Oct-2019 21:21",
-    "endedAt": "14-Oct-2019 21:21"
+    "status": "IN_PROGRESS"
   },
   {
     "mentorRequestId": "234",
-    "status": "IN_PROGRESS",
-    "numberOfLots": 1,
-    "numberOfWafers": 2,
-    "durationInMinutes": 23,
-    "startedAt": "14-Oct-2019 21:21",
-    "endedAt": "14-Oct-2019 21:21"
+    "status": "IN_PROGRESS"
   },
   {
     "mentorRequestId": "313",
-    "status": "IN_PROGRESS",
-    "numberOfLots": 1,
-    "numberOfWafers": 2,
-    "durationInMinutes": 23,
-    "startedAt": "14-Oct-2019 21:21",
-    "endedAt": "14-Oct-2019 21:21"
+    "status": "IN_PROGRESS"
   }
 ]

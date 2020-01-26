@@ -9,7 +9,7 @@ import {
 } from "redux-saga/effects";
 import { APP_STARTED } from "../App/actions";
 import {
-  UPDATE_TASK_STATUS,
+  UPDATE_MENTOR_REQUEST_STATUS,
   UpdateMentorRequestStatus
 } from "../MentorRequests/actions";
 import {
@@ -55,7 +55,9 @@ export function* listenToStatusNotifications() {
   let notificationIterator = 0;
 
   while (true) {
-    const action: UpdateMentorRequestStatus = yield take(UPDATE_TASK_STATUS);
+    const action: UpdateMentorRequestStatus = yield take(
+      UPDATE_MENTOR_REQUEST_STATUS
+    );
     yield fork(createNotification, action, notificationIterator++);
   }
 }

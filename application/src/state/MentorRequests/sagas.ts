@@ -1,13 +1,13 @@
 import { call, put, takeLatest } from "@redux-saga/core/effects";
 import { get, post } from "service/Api/Api";
 import {
-  CREATE_TASK_BEGIN,
+  CREATE_MENTOR_REQUEST_BEGIN,
   CreateMentorRequestBegin,
   createMentorRequestFailure,
   createMentorRequestSuccess,
-  FETCH_TASKS_BEGIN,
-  FETCH_TASKS_RESULT_OVERVIEW_BEGIN,
-  FETCH_TASKS_RESULT_WAFER_BEGIN,
+  FETCH_MENTOR_REQUESTS_BEGIN,
+  FETCH_MENTOR_REQUESTS_RESULT_OVERVIEW_BEGIN,
+  FETCH_MENTOR_REQUESTS_RESULT_WAFER_BEGIN,
   FetchMentorRequestResultOverview,
   fetchMentorRequestResultOverviewFailure,
   fetchMentorRequestResultOverviewSuccess,
@@ -89,12 +89,15 @@ export function* fetchMentorRequestResultWafer(
 }
 
 const mentorRequestsSagas = [
-  takeLatest(CREATE_TASK_BEGIN, createMentorRequest),
-  takeLatest(FETCH_TASKS_BEGIN, fetchMentorRequests),
+  takeLatest(CREATE_MENTOR_REQUEST_BEGIN, createMentorRequest),
+  takeLatest(FETCH_MENTOR_REQUESTS_BEGIN, fetchMentorRequests),
   takeLatest(
-    FETCH_TASKS_RESULT_OVERVIEW_BEGIN,
+    FETCH_MENTOR_REQUESTS_RESULT_OVERVIEW_BEGIN,
     fetchMentorRequestResultOverview
   ),
-  takeLatest(FETCH_TASKS_RESULT_WAFER_BEGIN, fetchMentorRequestResultWafer)
+  takeLatest(
+    FETCH_MENTOR_REQUESTS_RESULT_WAFER_BEGIN,
+    fetchMentorRequestResultWafer
+  )
 ];
 export default mentorRequestsSagas;
