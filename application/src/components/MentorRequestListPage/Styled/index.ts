@@ -3,6 +3,10 @@ import { SpinnerBoundaries } from "./SpinnerBoundaries";
 
 const Container = styled.div`
   padding: 15px;
+
+  .ant-spin-nested-loading {
+    height: 200px;
+  }
 `;
 
 const MentorRequestList = styled.div`
