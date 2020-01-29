@@ -1,0 +1,14 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Given FieldDropdown when rendering should have FieldDropdown matching snapshot 1`] = `
+<FieldDropdownView
+  labelText="fakeLabel"
+  onChange={[MockFunction]}
+  optionValues={
+    Array [
+      "1",
+      "2",
+    ]
+  }
+/>
+`;

@@ -8,7 +8,7 @@ jest.mock("react-router-dom", () => ({
   })
 }));
 
-describe("Given an MentorRequestListPage", () => {
+describe("Given MentorRequestCreationPage", () => {
   it("should have MentorRequestResultPage matching snapshot", () => {
     const component = shallow(
       <MentorRequestListPage

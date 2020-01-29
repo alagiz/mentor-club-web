@@ -1,11 +1,9 @@
 import {
-  IFetchMentorRequestResultsDetailRequest,
   IFetchMentorRequestResultsOverviewRequest,
-  IRunMentorRequestRequest,
   IMentorRequest,
   IMentorRequestResult,
   IMentorRequestStatus,
-  IWaferDetails
+  IUser
 } from "./types";
 
 export const FETCH_MENTOR_REQUESTS_BEGIN =
@@ -29,12 +27,12 @@ export const FETCH_MENTOR_REQUESTS_RESULT_OVERVIEW_SUCCESS =
 export const FETCH_MENTOR_REQUESTS_RESULT_OVERVIEW_FAILURE =
   "mentor-requests/FETCH_MENTOR_REQUESTS_RESULT_OVERVIEW_FAILURE";
 
-export const FETCH_MENTOR_REQUESTS_RESULT_WAFER_BEGIN =
-  "mentor-requests/FETCH_MENTOR_REQUESTS_RESULT_WAFER_BEGIN";
-export const FETCH_MENTOR_REQUESTS_RESULT_WAFER_SUCCESS =
-  "mentor-requests/FETCH_MENTOR_REQUESTS_RESULT_WAFER_SUCCESS";
-export const FETCH_MENTOR_REQUESTS_RESULT_WAFER_FAILURE =
-  "mentor-requests/FETCH_MENTOR_REQUESTS_RESULT_WAFER_FAILURE";
+export const FETCH_MENTOR_LIST_BEGIN =
+  "mentor-requests/FETCH_MENTOR_LIST_BEGIN";
+export const FETCH_MENTOR_LIST_SUCCESS =
+  "mentor-requests/FETCH_MENTOR_LIST_SUCCESS";
+export const FETCH_MENTOR_LIST_FAILURE =
+  "mentor-requests/FETCH_MENTOR_LIST_FAILURE";
 
 export const CLEAR_NEW_MENTOR_REQUEST_ID =
   "mentor-requests/CLEAR_NEW_MENTOR_REQUEST_ID";
@@ -64,9 +62,7 @@ export const fetchMentorRequestsFailure = (error: string) => {
   } as const;
 };
 
-export const createMentorRequestBegin = (
-  requestBody: IRunMentorRequestRequest
-) => {
+export const createMentorRequestBegin = (requestBody: IMentorRequest) => {
   return {
     type: CREATE_MENTOR_REQUEST_BEGIN,
     requestBody
@@ -112,29 +108,22 @@ export const fetchMentorRequestResultOverviewFailure = (error: string) => {
   } as const;
 };
 
-export const fetchMentorRequestResultWaferBegin = (
-  requestBody: IFetchMentorRequestResultsDetailRequest
-) => {
+export const fetchMentorListBegin = () => {
   return {
-    type: FETCH_MENTOR_REQUESTS_RESULT_WAFER_BEGIN,
-    requestBody
+    type: FETCH_MENTOR_LIST_BEGIN
   } as const;
 };
 
-export const fetchMentorRequestResultWaferSuccess = (
-  wmsId: string,
-  mentorRequestResultWafer: IWaferDetails
-) => {
+export const fetchMentorListSuccess = (mentors: IUser[]) => {
   return {
-    type: FETCH_MENTOR_REQUESTS_RESULT_WAFER_SUCCESS,
-    wmsId,
-    mentorRequestResultWafer
+    type: FETCH_MENTOR_LIST_SUCCESS,
+    mentors
   } as const;
 };
 
-export const fetchMentorRequestResultWaferFailure = (error: string) => {
+export const fetchMentorListFailure = (error: string) => {
   return {
-    type: FETCH_MENTOR_REQUESTS_RESULT_WAFER_FAILURE,
+    type: FETCH_MENTOR_LIST_FAILURE,
     error
   } as const;
 };
@@ -168,9 +157,7 @@ export type FetchMentorRequestResultOverview = ReturnType<
   typeof fetchMentorRequestResultOverviewBegin
 >;
 
-export type FetchMentorRequestResultWafer = ReturnType<
-  typeof fetchMentorRequestResultWaferBegin
->;
+export type FetchMentorList = ReturnType<typeof fetchMentorListBegin>;
 
 export type MentorRequestsActionTypes = ReturnType<
   | typeof fetchMentorRequestsBegin
@@ -182,9 +169,9 @@ export type MentorRequestsActionTypes = ReturnType<
   | typeof fetchMentorRequestResultOverviewBegin
   | typeof fetchMentorRequestResultOverviewSuccess
   | typeof fetchMentorRequestResultOverviewFailure
-  | typeof fetchMentorRequestResultWaferBegin
-  | typeof fetchMentorRequestResultWaferSuccess
-  | typeof fetchMentorRequestResultWaferFailure
+  | typeof fetchMentorListBegin
+  | typeof fetchMentorListSuccess
+  | typeof fetchMentorListFailure
   | typeof clearNewMentorRequestId
   | typeof updateMentorRequestStatus
 >;

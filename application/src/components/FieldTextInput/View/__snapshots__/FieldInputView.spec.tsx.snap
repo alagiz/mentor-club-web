@@ -1,0 +1,13 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Given FieldInputView when rendering should have FieldInputView matching snapshot 1`] = `
+<Fragment>
+  <styled.label>
+    fakeInput
+  </styled.label>
+  <Styled(Input)
+    onChange={[MockFunction]}
+    type="text"
+  />
+</Fragment>
+`;

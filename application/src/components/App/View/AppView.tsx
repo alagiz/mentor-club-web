@@ -5,6 +5,7 @@ import PrivateRoute from "../../PrivateRoute/Container/PrivateRoute";
 import MentorRequestListPage from "../../MentorRequestListPage/Container/MentorRequestListPage";
 import AuthenticatedPage from "../../AuthenticatedPage/Container/AuthenticatedPage";
 import { IAppViewProps } from "./IAppViewProps";
+import MentorRequestPage from "../../MentorRequestCreationPage/Container/MentorRequestCreationPage";
 
 const AppView: React.FC<IAppViewProps> = ({ logout }) => (
   <Router basename="/mentor-club">
@@ -16,7 +17,9 @@ const AppView: React.FC<IAppViewProps> = ({ logout }) => (
         <Route exact path="/mentor-requests">
           <MentorRequestListPage />
         </Route>
-        <Route exact path="/mentor-requests/new"></Route>
+        <Route exact path="/mentor-requests/new">
+          <MentorRequestPage />
+        </Route>
       </AuthenticatedPage>
     </PrivateRoute>
     <Route exact path="/login">

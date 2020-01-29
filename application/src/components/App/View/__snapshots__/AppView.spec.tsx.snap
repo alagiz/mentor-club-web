@@ -25,7 +25,9 @@ exports[`Given AppView when rendering should have AppView matching snapshot 1`] 
       <Route
         exact={true}
         path="/mentor-requests/new"
-      />
+      >
+        <Connect(MentorRequestCreationPage) />
+      </Route>
     </Connect(AuthenticatedPage)>
   </Connect(PrivateRoute)>
   <Route

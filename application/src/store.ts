@@ -4,7 +4,10 @@ import { authenticationReducer } from "./state/Authentication/reducer";
 import { notificationsReducer } from "./state/Notifications/reducer";
 import { mentorRequestsReducer } from "./state/MentorRequests/reducer";
 import { rootSaga } from "./state/rootSaga";
-import { IMentorRequestsState } from "./state/MentorRequests/types";
+import {
+  IFetchMentorListResponse,
+  IMentorRequestsState
+} from "./state/MentorRequests/types";
 import { IAuthenticationState } from "./state/Authentication/types";
 import { INotificationsState } from "./state/Notifications/types";
 
@@ -12,6 +15,7 @@ export interface IAppState {
   authentication: IAuthenticationState;
   notifications: INotificationsState;
   mentorRequests: IMentorRequestsState;
+  mentors: IFetchMentorListResponse;
 }
 
 const rootReducer = combineReducers({

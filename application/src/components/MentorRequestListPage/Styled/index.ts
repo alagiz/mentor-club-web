@@ -21,6 +21,10 @@ const CardContainer = styled.div`
   .ant-card-bordered {
     border: 0;
   }
+
+  .mentor-request-list-page-card {
+    width: 300px;
+  }
 `;
 
 const UserImage = styled.img`
