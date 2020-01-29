@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`Given an MentorRequestCreationPage should have MentorRequestResultPage matching snapshot 1`] = `
+exports[`Given MentorRequestCreationPage should have MentorRequestResultPage matching snapshot 1`] = `
 <MentorRequestListPageView
   error={null}
   isLoading={false}
