@@ -38,7 +38,7 @@ export const MentorRequestCreationPage: React.FC<IMentorRequestCreationPageProps
     if (newMentorRequestId) {
       history.push(`/mentor-requests/${newMentorRequestId}`);
     }
-  }, [newMentorRequestId]);
+  }, [newMentorRequestId, history]);
 
   useEffect(() => {
     return () => {
