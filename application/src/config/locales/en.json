@@ -27,7 +27,17 @@
   },
   "mentorRequestCreationPage": {
     "title": "New mentor request",
-    "backToMentorRequestList": "Back to mentor request list"
+    "backToMentorList": "Back to mentor list",
+    "mentorRequest": {
+      "description": "Description",
+      "mentor": "Mentor",
+      "sendRequest": "Send request",
+      "mentorProfile": {
+        "userName": "Name",
+        "userBio": "Biography",
+        "userPictureThumbnailSrc": "Picture"
+      }
+    }
   },
   "mentorRequestResultPage": {
     "title": "Mentor request result",

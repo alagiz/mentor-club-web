@@ -3,14 +3,14 @@ import {
   CREATE_MENTOR_REQUEST_BEGIN,
   CREATE_MENTOR_REQUEST_FAILURE,
   CREATE_MENTOR_REQUEST_SUCCESS,
+  FETCH_MENTOR_LIST_BEGIN,
+  FETCH_MENTOR_LIST_FAILURE,
+  FETCH_MENTOR_LIST_SUCCESS,
   FETCH_MENTOR_REQUESTS_BEGIN,
   FETCH_MENTOR_REQUESTS_FAILURE,
   FETCH_MENTOR_REQUESTS_RESULT_OVERVIEW_BEGIN,
   FETCH_MENTOR_REQUESTS_RESULT_OVERVIEW_FAILURE,
   FETCH_MENTOR_REQUESTS_RESULT_OVERVIEW_SUCCESS,
-  FETCH_MENTOR_REQUESTS_RESULT_WAFER_BEGIN,
-  FETCH_MENTOR_REQUESTS_RESULT_WAFER_FAILURE,
-  FETCH_MENTOR_REQUESTS_RESULT_WAFER_SUCCESS,
   FETCH_MENTOR_REQUESTS_SUCCESS,
   MentorRequestsActionTypes,
   UPDATE_MENTOR_REQUEST_STATUS
@@ -18,16 +18,16 @@ import {
 import { IMentorRequest, IMentorRequestsState } from "./types";
 
 const initialState: IMentorRequestsState = {
+  mentors: null,
   mentorRequests: null,
   mentorRequestResult: null,
-  mentorRequestResultWafers: {},
   isFetchingMentorRequests: false,
   isFetchingMentorRequestResultOverview: false,
-  isFetchingMentorRequestResultWafer: false,
+  isFetchingMentorList: false,
   isCreatingMentorRequest: false,
   fetchMentorRequestsError: null,
   fetchMentorRequestResultOverviewError: null,
-  fetchMentorRequestResultWaferError: null,
+  fetchMentorListError: null,
   createMentorRequestError: null,
   newMentorRequestId: null
 };
@@ -43,8 +43,7 @@ export const mentorRequestsReducer = (
         isFetchingMentorRequests: true,
         fetchMentorRequestsError: null,
         mentorRequests: null,
-        mentorRequestResult: null,
-        mentorRequestResultWafers: {}
+        mentorRequestResult: null
       };
     case FETCH_MENTOR_REQUESTS_SUCCESS:
       return {
@@ -94,25 +93,22 @@ export const mentorRequestsReducer = (
         )
       };
     }
-    case FETCH_MENTOR_REQUESTS_RESULT_WAFER_BEGIN:
+    case FETCH_MENTOR_LIST_BEGIN:
       return {
         ...state,
-        isFetchingMentorRequestResultWafer: true
+        isFetchingMentorList: true
       };
-    case FETCH_MENTOR_REQUESTS_RESULT_WAFER_SUCCESS:
+    case FETCH_MENTOR_LIST_SUCCESS:
       return {
         ...state,
-        isFetchingMentorRequestResultWafer: false,
-        mentorRequestResultWafers: {
-          ...state.mentorRequestResultWafers,
-          [action.wmsId]: action.mentorRequestResultWafer
-        }
+        isFetchingMentorList: false,
+        mentors: action.mentors
       };
-    case FETCH_MENTOR_REQUESTS_RESULT_WAFER_FAILURE:
+    case FETCH_MENTOR_LIST_FAILURE:
       return {
         ...state,
-        isFetchingMentorRequestResultWafer: false,
-        fetchMentorRequestResultWaferError: action.error
+        isFetchingMentorList: false,
+        fetchMentorListError: action.error
       };
     case CREATE_MENTOR_REQUEST_BEGIN:
       return {

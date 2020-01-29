@@ -6,6 +6,7 @@ const middleware = jsonServer.defaults();
 
 const endpoints = {
   "/mentor-requests": "/mentorRequestList",
+  "/mentors": "/mentorList",
   "/authenticate": "/userTestData",
   "/validate-jwt": "/validateToken",
   "/mentor-requests/new": "/createMentorRequest"

@@ -5,23 +5,22 @@ import {
   CreateMentorRequestBegin,
   createMentorRequestFailure,
   createMentorRequestSuccess,
+  FETCH_MENTOR_LIST_BEGIN,
   FETCH_MENTOR_REQUESTS_BEGIN,
   FETCH_MENTOR_REQUESTS_RESULT_OVERVIEW_BEGIN,
-  FETCH_MENTOR_REQUESTS_RESULT_WAFER_BEGIN,
+  fetchMentorListFailure,
+  fetchMentorListSuccess,
   FetchMentorRequestResultOverview,
   fetchMentorRequestResultOverviewFailure,
   fetchMentorRequestResultOverviewSuccess,
-  FetchMentorRequestResultWafer,
-  fetchMentorRequestResultWaferFailure,
-  fetchMentorRequestResultWaferSuccess,
   fetchMentorRequestsFailure,
   fetchMentorRequestsSuccess
 } from "./actions";
 import {
-  IFetchMentorRequestResultsDetailResponse,
   IFetchMentorRequestResultsOverviewResponse,
+  IMentorRequest,
   IRunMentorRequestResponse,
-  IMentorRequest
+  IUser
 } from "./types";
 
 export function* fetchMentorRequests() {
@@ -65,26 +64,13 @@ export function* fetchMentorRequestResultOverview(
   }
 }
 
-export function* fetchMentorRequestResultWafer(
-  action: FetchMentorRequestResultWafer
-) {
+export function* fetchMentorList() {
   try {
-    const response: IFetchMentorRequestResultsDetailResponse = yield call(
-      get,
-      `/mentor-requests/${action.requestBody.mentorRequestId}`,
-      {
-        wmsId: action.requestBody.wmsId
-      }
-    );
+    const response: IUser[] = yield call(get, `/mentors`);
 
-    yield put(
-      fetchMentorRequestResultWaferSuccess(
-        action.requestBody.wmsId,
-        response.wafer
-      )
-    );
+    yield put(fetchMentorListSuccess(response));
   } catch (error) {
-    yield put(fetchMentorRequestResultWaferFailure(error.message));
+    yield put(fetchMentorListFailure(error.message));
   }
 }
 
@@ -95,9 +81,6 @@ const mentorRequestsSagas = [
     FETCH_MENTOR_REQUESTS_RESULT_OVERVIEW_BEGIN,
     fetchMentorRequestResultOverview
   ),
-  takeLatest(
-    FETCH_MENTOR_REQUESTS_RESULT_WAFER_BEGIN,
-    fetchMentorRequestResultWafer
-  )
+  takeLatest(FETCH_MENTOR_LIST_BEGIN, fetchMentorList)
 ];
 export default mentorRequestsSagas;

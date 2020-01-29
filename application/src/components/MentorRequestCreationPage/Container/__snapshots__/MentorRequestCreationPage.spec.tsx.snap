@@ -1,0 +1,13 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Given a MentorRequestCreationPage should have MentorRequestResultPage matching snapshot 1`] = `
+<MentorRequestCreationPageView
+  createMentorRequest={[Function]}
+  isLoading={false}
+  mentorRequestDescription=""
+  mentors={Array []}
+  selectedMentor={null}
+  setSelectedMentor={[Function]}
+  updateMentorRequestDescription={[Function]}
+/>
+`;

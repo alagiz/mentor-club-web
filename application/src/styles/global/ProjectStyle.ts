@@ -7,7 +7,11 @@ export const ProjectStyle = createGlobalStyle`
   }
     
   body {
-    .ant-popover-inner {
+    #root > * {
+      flex: 1 100%;
+    }
+    
+    .ant-popover-inner, .ant-select-dropdown {
        border-radius: 0;
     }
         

@@ -2,6 +2,7 @@
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const userTestData = require("../../integration-tests/src/fixtures/userTestData");
 const mentorRequestList = require("../../integration-tests/src/fixtures/mentorRequestList");
+const mentorList = require("../../integration-tests/src/fixtures/mentorList");
 const mentorRequestResult = require("../../integration-tests/src/fixtures/mentorRequestResult");
 const createMentorRequest = require("../../integration-tests/src/fixtures/createMentorRequestResponse");
 
@@ -11,6 +12,7 @@ module.exports = () => {
     mentorRequestResult,
     userTestData,
     createMentorRequest,
+    mentorList,
     validateToken: {}
   };
 };

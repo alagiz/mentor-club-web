@@ -4,6 +4,14 @@ export type IMentorRequestStatus =
   | "DONE"
   | "FAILED";
 
+export interface IUser {
+  userId: string;
+  userName: string;
+  userRole: string;
+  userBio: string;
+  userPictureThumbnailSrc: string;
+}
+
 export interface IMentorRequest {
   mentorRequestId: string;
   status: IMentorRequestStatus;
@@ -13,16 +21,16 @@ export interface IMentorRequest {
 }
 
 export interface IMentorRequestsState {
+  mentors: IUser[] | null;
   mentorRequests: IMentorRequest[] | null;
   mentorRequestResult: IMentorRequestResult | null;
-  mentorRequestResultWafers: { [x: string]: IWaferDetails };
   isFetchingMentorRequests: boolean;
   isFetchingMentorRequestResultOverview: boolean;
-  isFetchingMentorRequestResultWafer: boolean;
+  isFetchingMentorList: boolean;
   isCreatingMentorRequest: boolean;
   fetchMentorRequestsError: string | null;
   fetchMentorRequestResultOverviewError: string | null;
-  fetchMentorRequestResultWaferError: string | null;
+  fetchMentorListError: string | null;
   createMentorRequestError: string | null;
   newMentorRequestId: string | null;
 }
@@ -43,84 +51,20 @@ export interface IMentorRequestResult {
   status: IMentorRequestStatus;
   startedAt: string;
   endedAt: string;
-  wafers: IResultWafer[];
-}
-
-export interface IResultWafer {
-  waferId: string;
-  wmsId: string;
-  fittedRange: number;
-  residual: number;
-  chamberId: string;
-  metrologyStartTime: string;
-}
-
-export interface IWaferDetails {
-  id: string;
-  waferID: string | null;
-  lotID: string | null;
-  chuckID: string | null;
-  operationParameters: object;
-  parentId: string | null;
-  exposedFields: IExposedFields;
-  waferPoints: IWaferPoints;
-}
-
-interface IExposedFields {
-  width: number;
-  height: number;
-  diam: number;
-  fields: IWaferField[];
-}
-
-export interface IWaferPointsValue {
-  id: number;
-  cfx: number;
-  cfy: number;
-  ifx: number;
-  ify: number;
-  val: number;
-  valX: number | undefined | null;
-  valY: number | undefined | null;
-  validX: boolean;
-  validY: boolean;
-  xPos: number;
-  yPos: number;
-  radius: number;
-}
-
-interface IWaferPoints {
-  stats?: any[];
-  values: IWaferPointsValue[];
-}
-
-interface IWaferField {
-  id: number;
-  posX: number;
-  posY: number;
-  scan: string;
-  scanPath: string;
 }
 
 export interface IFetchMentorRequestResultsDetailRequest {
   mentorRequestId: string;
-  wmsId: string;
 }
 
-export interface IFetchMentorRequestResultsDetailResponse {
-  wafer: IWaferDetails;
+export interface IFetchMentorListResponse {
+  mentors: IUser[];
 }
 
 export interface IRunMentorRequestRequest {
-  rho: number;
-  targetLabel: string;
-  parameterName: string;
-  featureAngle: number;
-  healthFilterSettingsMax?: number;
-  healthFilterSettingsNSigma?: number;
-  residualOutlierRemovalSettingsNSigma?: number;
-  healthFilterSettingsEdgeClearance?: number;
   userId: string;
+  mentorId: string;
+  requestDescription: string;
 }
 
 export interface IRunMentorRequestResponse {

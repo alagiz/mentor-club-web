@@ -1,0 +1,59 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Given MentorRequestResultPageView when rendering should have MentorRequestResultPageView matching snapshot 1`] = `
+<styled.div>
+  <styled.div>
+    <styled.div>
+      New mentor request
+    </styled.div>
+    <Link
+      to="/mentor-requests/new"
+    >
+      <Button
+        block={false}
+        data-id="new-mentor-request-button"
+        ghost={false}
+        htmlType="button"
+        loading={false}
+        style={
+          Object {
+            "borderRadius": "0",
+            "color": "white",
+            "marginRight": "5px",
+            "width": "100%",
+          }
+        }
+        type="ghost"
+      >
+        Back to mentor list
+      </Button>
+    </Link>
+  </styled.div>
+  <styled.div>
+    <styled.div>
+      <FieldInputView
+        isTextArea={true}
+        labelText="Description"
+        numberOfLinesForTextArea={4}
+        onChange={[MockFunction]}
+        value=""
+      />
+      <FieldDropdown
+        labelText="Mentor"
+        onChange={[Function]}
+        optionValues={Array []}
+        value=""
+      />
+    </styled.div>
+    <styled.div>
+      <Styled(Button)
+        data-id="run-task-button"
+        onClick={[MockFunction]}
+        type="primary"
+      >
+        Send request
+      </Styled(Button)>
+    </styled.div>
+  </styled.div>
+</styled.div>
+`;

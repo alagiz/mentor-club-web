@@ -1,0 +1,28 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Given FieldDropdownView when rendering should have FieldDropdownView matching snapshot 1`] = `
+<Fragment>
+  <styled.label>
+    fakeLabel
+  </styled.label>
+  <Styled(Select)
+    disabled={false}
+    onChange={[MockFunction]}
+    placeholder="Choose fakeLabel"
+    showSearch={true}
+  >
+    <Option
+      key="1"
+      value="1"
+    >
+      1
+    </Option>
+    <Option
+      key="2"
+      value="2"
+    >
+      2
+    </Option>
+  </Styled(Select)>
+</Fragment>
+`;

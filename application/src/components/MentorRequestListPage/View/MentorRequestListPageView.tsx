@@ -4,7 +4,7 @@ import { Styled } from "../Styled";
 import { Link } from "react-router-dom";
 import { IMentorRequestListPageViewProps } from "./IMentorRequestListPageViewProps";
 import { Alert, Button, Spin } from "antd";
-import Card from "../components/Card/Container/Card";
+import Card from "../../Card/Container/Card";
 import { includes, keys } from "ramda";
 
 const MentorRequestListPageView: React.FC<IMentorRequestListPageViewProps> = ({
@@ -65,7 +65,7 @@ const MentorRequestListPageView: React.FC<IMentorRequestListPageViewProps> = ({
                       label: translator.t(
                         `mentorRequestListPage.mentorRequest.${key}`
                       ),
-                      value: {
+                      valueContainer: {
                         value:
                           key === "requesterPictureThumbnailSrc" ? (
                             <Styled.UserImage
@@ -101,6 +101,7 @@ const MentorRequestListPageView: React.FC<IMentorRequestListPageViewProps> = ({
                       </Button>
                     </>
                   }
+                  customClassName={"mentor-request-list-page-card"}
                 />
               </Styled.CardContainer>
             ))}
