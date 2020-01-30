@@ -2,9 +2,9 @@ import React from "react";
 import { shallow } from "enzyme";
 import MentorRequestCreationPageView from "./MentorRequestCreationPageView";
 
-describe("Given MentorRequestResultPageView", () => {
+describe("Given MentorRequestCreationPageView", () => {
   describe("when rendering", () => {
-    it("should have MentorRequestResultPageView matching snapshot", () => {
+    it("should have MentorRequestCreationPageView matching snapshot", () => {
       const component = shallow(
         <MentorRequestCreationPageView
           isLoading={false}

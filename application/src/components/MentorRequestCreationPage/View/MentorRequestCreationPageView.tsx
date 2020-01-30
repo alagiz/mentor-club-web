@@ -28,7 +28,7 @@ const MentorRequestCreationPageView: React.FC<IMentorRequestCreationPageViewProp
         <Styled.TopHeader>
           {translator.t("mentorRequestCreationPage.title")}
         </Styled.TopHeader>
-        <Link to="/mentor-requests/new">
+        <Link to="/mentor-list">
           <Button
             type="ghost"
             style={{

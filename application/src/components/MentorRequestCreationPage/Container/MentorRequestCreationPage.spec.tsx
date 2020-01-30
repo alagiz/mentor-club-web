@@ -6,11 +6,16 @@ jest.mock("react-router-dom");
 jest.mock("react-router", () => ({
   useHistory: () => ({
     push: jest.fn()
+  }),
+  useLocation: () => ({
+    state: {
+      detail: ""
+    }
   })
 }));
 
 describe("Given a MentorRequestCreationPage", () => {
-  it("should have MentorRequestResultPage matching snapshot", () => {
+  it("should have MentorRequestCreationPage matching snapshot", () => {
     const component = shallow(
       <MentorRequestCreationPage
         mentors={[]}
