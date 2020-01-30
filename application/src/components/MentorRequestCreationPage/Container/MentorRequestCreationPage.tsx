@@ -45,7 +45,7 @@ export const MentorRequestCreationPage: React.FC<IMentorRequestCreationPageProps
     if (passedInMentor) {
       setSelectedMentor(passedInMentor);
     }
-  }, [location]);
+  }, [location, mentors]);
 
   useEffect(() => {
     fetchMentorListBegin();
