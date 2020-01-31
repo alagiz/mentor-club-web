@@ -34,7 +34,12 @@ export const MentorRequestCreationPage: React.FC<IMentorRequestCreationPageProps
   >("");
 
   useEffect(() => {
-    if (isNil(location.state.detail) || isNil(mentors)) {
+    if (
+      isNil(location) ||
+      isNil(location.state) ||
+      isNil(location.state.detail) ||
+      isNil(mentors)
+    ) {
       return;
     }
 
