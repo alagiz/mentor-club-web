@@ -13,8 +13,9 @@ import {
   selectNewMentorRequestId
 } from "../../../state/MentorRequests/selectors";
 import { IMentorRequestCreationPageProps } from "./IMentorRequestCreationPageProps";
-import { useHistory } from "react-router";
+import { useHistory, useLocation } from "react-router";
 import { IUser } from "../../../state/MentorRequests/types";
+import { isNil } from "ramda";
 
 export const MentorRequestCreationPage: React.FC<IMentorRequestCreationPageProps> = ({
   mentors,
@@ -24,11 +25,27 @@ export const MentorRequestCreationPage: React.FC<IMentorRequestCreationPageProps
   isFetchingMentorList,
   newMentorRequestId
 }) => {
+  const location = useLocation<{ detail: string }>();
+
   const history = useHistory();
   const [selectedMentor, setSelectedMentor] = useState<IUser | null>(null);
   const [mentorRequestDescription, setMentorRequestDescription] = useState<
     string
   >("");
+
+  useEffect(() => {
+    if (isNil(location.state.detail) || isNil(mentors)) {
+      return;
+    }
+
+    const passedInMentor = mentors.find(
+      (mentor: any) => mentor.userId === location.state.detail
+    );
+
+    if (passedInMentor) {
+      setSelectedMentor(passedInMentor);
+    }
+  }, [location, mentors]);
 
   useEffect(() => {
     fetchMentorListBegin();

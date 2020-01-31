@@ -1,17 +1,17 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`Given MentorRequestResultPageView when rendering should have MentorRequestResultPageView matching snapshot 1`] = `
+exports[`Given MentorListPageView when rendering should have MentorListPageView matching snapshot 1`] = `
 <styled.div>
   <styled.div>
     <styled.div>
-      Mentor request list
+      Mentor list
     </styled.div>
     <Link
-      to="/mentor-list"
+      to="/mentor-requests/new"
     >
       <Button
         block={false}
-        data-id="new-mentor-request-button"
+        data-id="mentor-list-button"
         ghost={false}
         htmlType="button"
         loading={false}

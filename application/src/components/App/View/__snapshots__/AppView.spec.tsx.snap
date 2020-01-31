@@ -13,7 +13,7 @@ exports[`Given AppView when rendering should have AppView matching snapshot 1`] 
         path="/"
       >
         <Redirect
-          to="/mentor-requests"
+          to="/mentor-list"
         />
       </Route>
       <Route
@@ -21,6 +21,12 @@ exports[`Given AppView when rendering should have AppView matching snapshot 1`] 
         path="/mentor-requests"
       >
         <Connect(MentorRequestListPage) />
+      </Route>
+      <Route
+        exact={true}
+        path="/mentor-list"
+      >
+        <Connect(MentorListPage) />
       </Route>
       <Route
         exact={true}

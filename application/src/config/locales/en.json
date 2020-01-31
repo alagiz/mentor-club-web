@@ -15,6 +15,16 @@
     "invalidCredentials": "Invalid e-mail or password",
     "login": "Login"
   },
+  "mentorListPage": {
+    "title": "Mentor list",
+    "newMentorRequest": "New mentor request",
+    "noMentorRequestsFound": "There are no mentor requests",
+    "mentorCard": {
+      "userName": "Name",
+      "userBio": "Biography",
+      "userPictureThumbnailSrc": "Face"
+    }
+  },
   "mentorRequestListPage": {
     "title": "Mentor request list",
     "newMentorRequest": "New mentor request",

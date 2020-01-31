@@ -1,24 +1,24 @@
 import React from "react";
-import translator from "../../../config/i18next";
+import { scopedTranslate } from "../../../config/i18next";
 import { Styled } from "../Styled";
 import { Link } from "react-router-dom";
-import { IMentorRequestListPageViewProps } from "./IMentorRequestListPageViewProps";
-import { Alert, Button, Spin } from "antd";
+import { IMentorListPageViewProps } from "./IMentorListPageViewProps";
+import { Button, Spin } from "antd";
 import Card from "../../Card/Container/Card";
 import { includes, keys } from "ramda";
 
-const MentorRequestListPageView: React.FC<IMentorRequestListPageViewProps> = ({
-  mentorRequests,
-  isLoading,
-  error
+const translateMentorPage = scopedTranslate("mentorListPage");
+
+const MentorListPageView: React.FC<IMentorListPageViewProps> = ({
+  mentors,
+  isFetchingMentorList,
+  handleChooseMentorClick
 }) => {
   return (
     <Styled.Container>
       <Styled.TopHeaderContainer>
-        <Styled.TopHeader>
-          {translator.t("mentorRequestListPage.title")}
-        </Styled.TopHeader>
-        <Link to="/mentor-list">
+        <Styled.TopHeader>{translateMentorPage("title")}</Styled.TopHeader>
+        <Link to="/mentor-requests/new">
           <Button
             type="ghost"
             style={{
@@ -27,56 +27,42 @@ const MentorRequestListPageView: React.FC<IMentorRequestListPageViewProps> = ({
               marginRight: "5px",
               color: "white"
             }}
-            data-id="new-mentor-request-button"
+            data-id="mentor-list-button"
           >
-            {translator.t("mentorRequestListPage.newMentorRequest")}
+            {translateMentorPage("newMentorRequest")}
           </Button>
         </Link>
       </Styled.TopHeaderContainer>
-
-      {isLoading && (
+      {isFetchingMentorList && (
         <Spin>
           <Styled.SpinnerBoundaries />
         </Spin>
       )}
-
-      {error && (
-        <Alert
-          data-id="fetch-mentor-requests-error"
-          type="error"
-          message={error}
-        />
-      )}
-
-      {mentorRequests && (
+      {!isFetchingMentorList && mentors && (
         <div data-id="mentor-request-list-table">
           <Styled.MentorRequestList>
-            {mentorRequests.map(mentorRequest => (
-              <Styled.CardContainer key={mentorRequest.mentorRequestId}>
+            {mentors.map(mentor => (
+              <Styled.CardContainer key={mentor.userId}>
                 <Card
-                  cardTitle={`${mentorRequest.requesterName}, request #${mentorRequest.mentorRequestId}`}
-                  cardDataItems={keys(mentorRequest)
-                    .filter(
-                      key => !includes(key, ["mentorRequestId", "status"])
-                    )
+                  cardTitle={mentor.userName}
+                  cardDataItems={keys(mentor)
+                    .filter(key => !includes(key, ["userId", "userRole"]))
                     .sort()
                     .reverse()
                     .map(key => ({
-                      label: translator.t(
-                        `mentorRequestListPage.mentorRequest.${key}`
-                      ),
+                      label: translateMentorPage(`mentorCard.${key}`),
                       valueContainer: {
                         value:
-                          key === "requesterPictureThumbnailSrc" ? (
+                          key === "userPictureThumbnailSrc" ? (
                             <Styled.UserImage
                               data-id="profile-image"
-                              src={mentorRequest.requesterPictureThumbnailSrc}
+                              src={mentor.userPictureThumbnailSrc}
                             />
                           ) : (
-                            mentorRequest[key]
+                            mentor[key]
                           ),
                         customClass:
-                          key !== "requesterPictureThumbnailSrc"
+                          key !== "userPictureThumbnailSrc"
                             ? "card-data-item-text"
                             : ""
                       }
@@ -85,19 +71,14 @@ const MentorRequestListPageView: React.FC<IMentorRequestListPageViewProps> = ({
                     <>
                       <Button
                         type="primary"
+                        onClick={() => handleChooseMentorClick(mentor.userId)}
                         style={{
                           borderRadius: "0",
                           width: "100%",
                           marginRight: "5px"
                         }}
                       >
-                        Accept
-                      </Button>
-                      <Button
-                        type="danger"
-                        style={{ borderRadius: "0", width: "100%" }}
-                      >
-                        Decline
+                        Choose this mawfawka
                       </Button>
                     </>
                   }
@@ -112,4 +93,4 @@ const MentorRequestListPageView: React.FC<IMentorRequestListPageViewProps> = ({
   );
 };
 
-export default MentorRequestListPageView;
+export default MentorListPageView;
