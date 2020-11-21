@@ -19,7 +19,7 @@ const handleError = (error: any) => {
 };
 
 // @ts-ignore
-const baseUrl = window._env_.BACKEND_URL;
+const baseUrl = window._env_ ? window._env_.BACKEND_URL : settings.apiBaseUrl;
 const getUrl = (endpoint: string): string => baseUrl + endpoint;
 
 export const get = async (endpoint: string, body?: any): Promise<string[]> => {
