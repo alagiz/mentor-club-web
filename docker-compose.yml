@@ -1,0 +1,16 @@
+version: '3.2'
+services:
+  frontend:
+    image: alagiz/mentor-club-web-frontend
+    build:
+      context: application
+      dockerfile: Dockerfile
+    command: ["/bin/bash", "-c", "/usr/share/nginx/html/env.sh && nginx -g \"daemon off;\""]
+    environment:
+      - BACKEND_URL=http://localhost:3030
+    ports:
+      - "8083:80"
+  backend:
+    image: alagiz/mentor-club-json-server
+    ports:
+      - "3030:3030"

@@ -1,10 +1,10 @@
 /* global require module */
 // eslint-disable-next-line @typescript-eslint/no-var-requires
-const userTestData = require("../../integration-tests/src/fixtures/userTestData");
-const mentorRequestList = require("../../integration-tests/src/fixtures/mentorRequestList");
-const mentorList = require("../../integration-tests/src/fixtures/mentorList");
-const mentorRequestResult = require("../../integration-tests/src/fixtures/mentorRequestResult");
-const createMentorRequest = require("../../integration-tests/src/fixtures/createMentorRequestResponse");
+const userTestData = require("./fixtures/userTestData");
+const mentorRequestList = require("./fixtures/mentorRequestList");
+const mentorList = require("./fixtures/mentorList");
+const mentorRequestResult = require("./fixtures/mentorRequestResult");
+const createMentorRequest = require("./fixtures/createMentorRequestResponse");
 
 module.exports = () => {
   return {

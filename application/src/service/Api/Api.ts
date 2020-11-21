@@ -18,7 +18,9 @@ const handleError = (error: any) => {
   }
 };
 
-const getUrl = (endpoint: string): string => settings.apiBaseUrl + endpoint;
+// @ts-ignore
+const baseUrl = window._env_.BACKEND_URL;
+const getUrl = (endpoint: string): string => baseUrl + endpoint;
 
 export const get = async (endpoint: string, body?: any): Promise<string[]> => {
   return await axios

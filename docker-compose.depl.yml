@@ -1,0 +1,13 @@
+version: '3.2'
+services:
+  frontend:
+    image: mentor-club-web-frontend
+    command: ["/bin/bash", "-c", "/usr/share/nginx/html/env.sh && nginx -g \"daemon off;\""]
+    environment:
+    - BACKEND_URL=https://artem-alagizov.com/mentor-club-backend
+    ports:
+    - 8111:80
+  backend:
+    image: alagiz/mentor-club-json-server
+    ports:
+    - 3030:3030

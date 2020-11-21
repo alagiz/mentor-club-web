@@ -11,6 +11,7 @@ const CardDataItem = styled.div`
     text-overflow: ellipsis;
     overflow: hidden;
     text-align: right;
+    overflow-y: auto;
   }
 `;
 
