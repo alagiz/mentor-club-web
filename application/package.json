@@ -1,5 +1,6 @@
 {
   "name": "mentor-club",
+  "homepage": "/mentor-club",
   "version": "0.1.0",
   "private": true,
   "dependencies": {
