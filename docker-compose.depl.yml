@@ -1,7 +1,7 @@
 version: '3.2'
 services:
   frontend:
-    image: mentor-club-web-frontend
+    image: alagiz/mentor-club-web-frontend
     command: ["/bin/bash", "-c", "/usr/share/nginx/html/env.sh && nginx -g \"daemon off;\""]
     environment:
     - BACKEND_URL=https://artem-alagizov.com/mentor-club-backend
