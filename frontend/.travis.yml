@@ -5,7 +5,7 @@ cache:
   directories:
     - node_modules
 script:
-  - cd application
+  - cd frontend/application
   - yarn install &&
     yarn test &&
     yarn build
