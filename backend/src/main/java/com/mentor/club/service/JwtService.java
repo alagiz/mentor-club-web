@@ -1,17 +1,16 @@
 package com.mentor.club.service;
 
+import com.auth0.jwt.exceptions.JWTDecodeException;
+import com.auth0.jwt.exceptions.SignatureVerificationException;
+import com.auth0.jwt.interfaces.DecodedJWT;
 import com.mentor.club.model.ExtendableResult;
 import com.mentor.club.model.InternalResponse;
 import com.mentor.club.utils.RsaUtils;
 import com.mentor.club.utils.WhitelistManager;
-
-import com.auth0.jwt.exceptions.JWTDecodeException;
-import com.auth0.jwt.exceptions.SignatureVerificationException;
-import com.auth0.jwt.interfaces.DecodedJWT;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.security.GeneralSecurityException;
@@ -20,7 +19,6 @@ import static com.mentor.club.utils.RsaUtils.USERNAME_CLAIM;
 
 @Service
 public class JwtService {
-
     private static final Logger LOGGER = LoggerFactory.getLogger(JwtService.class);
 
     static final String MESSAGE_CLAIM = "message";
@@ -34,10 +32,37 @@ public class JwtService {
     static final String INFO_MESSAGE_INVALIDATED_JWT = "JWT has been invalidated!";
     static final String INFO_MESSAGE_NON_WHITELIST_JWT = "JWT is not whitelisted!";
 
-    public InternalResponse validateJWT(String token, boolean includeUserIdInResponse) {
-        final InternalResponse internalResponse = new InternalResponse();
+    public ResponseEntity invalidateJWT(String authorization) {
+        final String[] splitAuth = authorization.split(" ");
+        final String token = splitAuth[splitAuth.length - 1];
+
+        final InternalResponse authResponse = validateJWT(token, false, false);
+
+        if (authResponse.getStatus() == HttpStatus.OK.value()) {
+            return new ResponseEntity<>(authResponse.getJson(), HttpStatus.OK);
+        } else {
+            return new ResponseEntity<>(authResponse.getJson(), HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    public ResponseEntity validateJWT(String authorization) {
+        final String[] splitAuth = authorization.split(" ");
+        final String token = splitAuth[splitAuth.length - 1];
+
+        return returnResponse(token, false);
+    }
+
+    public ResponseEntity getUserIdFromJwt(String authorization) {
+        final String[] splitAuth = authorization.split(" ");
+        final String token = splitAuth[splitAuth.length - 1];
+
+        return returnResponse(token, true);
+    }
+
+    public InternalResponse validateJWT(String token, Boolean includeUserIdInResponse, Boolean isValidation) {
         DecodedJWT decodedJWT = null;
         String errorMessage = "";
+
         try {
             decodedJWT = RsaUtils.decodeToken(token);
         } catch (JWTDecodeException exception) {
@@ -48,24 +73,35 @@ public class JwtService {
             errorMessage = ERROR_MESSAGE_SIGNATURE_VERIFICATION;
         }
 
+        return validateOrInvalidateJWT(errorMessage, decodedJWT, isValidation, includeUserIdInResponse);
+    }
+
+    public InternalResponse validateOrInvalidateJWT(String errorMessage, DecodedJWT decodedJWT, Boolean isValidation, Boolean includeUserIdInResponse) {
+        final InternalResponse internalResponse = new InternalResponse();
         final ExtendableResult resultJson = new ExtendableResult();
+
         if (decodedJWT == null) {
             LOGGER.error(errorMessage);
             resultJson.getProperties().put(MESSAGE_CLAIM, errorMessage);
-
-            internalResponse.setStatus(HttpStatus.UNAUTHORIZED.value());
+            internalResponse.setStatus(HttpStatus.BAD_REQUEST.value());
         } else {
-            if (WhitelistManager.isTokenWhitelisted(decodedJWT)) {
-                resultJson.getProperties().put(MESSAGE_CLAIM, INFO_MESSAGE_VALID_JWT);
+            if (isValidation) {
+                if (WhitelistManager.isTokenWhitelisted(decodedJWT)) {
+                    resultJson.getProperties().put(MESSAGE_CLAIM, INFO_MESSAGE_VALID_JWT);
 
-                if (includeUserIdInResponse) {
-                    resultJson.getProperties().put(USER_ID_CLAIM, decodedJWT.getClaims().get(USERNAME_CLAIM).asString());
+                    if (includeUserIdInResponse) {
+                        resultJson.getProperties().put(USER_ID_CLAIM, decodedJWT.getClaims().get(USERNAME_CLAIM).asString());
+                    }
+
+                    internalResponse.setStatus(HttpStatus.OK.value());
+                } else {
+                    resultJson.getProperties().put(MESSAGE_CLAIM, INFO_MESSAGE_NON_WHITELIST_JWT);
+                    internalResponse.setStatus(HttpStatus.UNAUTHORIZED.value());
                 }
-
-                internalResponse.setStatus(HttpStatus.OK.value());
             } else {
-                resultJson.getProperties().put(MESSAGE_CLAIM, INFO_MESSAGE_NON_WHITELIST_JWT);
-                internalResponse.setStatus(HttpStatus.UNAUTHORIZED.value());
+                WhitelistManager.logout(decodedJWT);
+                resultJson.getProperties().put(MESSAGE_CLAIM, INFO_MESSAGE_INVALIDATED_JWT);
+                internalResponse.setStatus(HttpStatus.OK.value());
             }
         }
 
@@ -74,35 +110,14 @@ public class JwtService {
         return internalResponse;
     }
 
-    public InternalResponse invalidateJWT(String token) {
-        final InternalResponse internalResponse = new InternalResponse();
-        DecodedJWT decodedJWT = null;
-        String errorMessage = "";
+    private ResponseEntity returnResponse(String token, boolean includeUserIdInResponse) {
+        final InternalResponse authResponse = validateJWT(token, includeUserIdInResponse, true);
 
-        try {
-            decodedJWT = RsaUtils.decodeToken(token);
-        } catch (JWTDecodeException exception) {
-            errorMessage = ERROR_MESSAGE_INVALID_TOKEN;
-        } catch (GeneralSecurityException e) {
-            errorMessage = ERROR_MESSAGE_CRYPTO_ALGORITHM;
-        } catch (SignatureVerificationException ex) {
-            errorMessage = ERROR_MESSAGE_SIGNATURE_VERIFICATION;
-        }
-        final ExtendableResult resultJson = new ExtendableResult();
-
-        if (decodedJWT == null) {
-            LOGGER.error(errorMessage);
-            resultJson.getProperties().put(MESSAGE_CLAIM, errorMessage);
-            internalResponse.setStatus(HttpStatus.BAD_REQUEST.value());
+        if (authResponse.getStatus() == HttpStatus.OK.value()) {
+            return new ResponseEntity<>(authResponse.getJson(), HttpStatus.OK);
         } else {
-            WhitelistManager.logout(decodedJWT);
-            resultJson.getProperties().put(MESSAGE_CLAIM, INFO_MESSAGE_INVALIDATED_JWT);
-            internalResponse.setStatus(HttpStatus.OK.value());
+            return new ResponseEntity<>(authResponse.getJson(), HttpStatus.UNAUTHORIZED);
         }
-
-        internalResponse.setJson(resultJson);
-
-        return internalResponse;
     }
 
 }

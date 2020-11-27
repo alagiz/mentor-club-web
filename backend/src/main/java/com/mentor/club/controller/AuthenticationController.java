@@ -1,5 +1,8 @@
 package com.mentor.club.controller;
 
+import com.mentor.club.service.AbstractAuthenticationService;
+import lombok.Getter;
+import lombok.Setter;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -22,7 +25,10 @@ import io.swagger.annotations.ApiResponses;
 @RestController
 @RequestMapping("/authenticate")
 @Api(value = "User authentication")
-public class AuthenticationController extends AbstractAuthenticationController {
+public class AuthenticationController {
+    @Getter
+    @Setter
+    protected AbstractAuthenticationService authenticationService;
 
     @PostMapping()
     @ApiOperation(value = "Credentials-based authentication request")
@@ -43,10 +49,5 @@ public class AuthenticationController extends AbstractAuthenticationController {
     @ApiOperation(value = "Request the public key")
     public ResponseEntity getPublicKey() {
         return new ResponseEntity<>(authenticationService.getPublicKey(), HttpStatus.OK);
-    }
-
-    @Override
-    String qualifiedControllerName() {
-        return "Authentication Controller";
     }
 }

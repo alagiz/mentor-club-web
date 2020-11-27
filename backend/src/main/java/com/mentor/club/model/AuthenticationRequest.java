@@ -18,5 +18,4 @@ public class AuthenticationRequest {
     @JsonProperty
     @ApiModelProperty(notes = "Password", required = true)
     String password;
-
 }
