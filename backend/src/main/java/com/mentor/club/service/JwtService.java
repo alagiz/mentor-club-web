@@ -38,7 +38,7 @@ public class JwtService {
 
         final InternalResponse authResponse = validateJWT(token, false, false);
 
-        if (authResponse.getStatus() == HttpStatus.OK.value()) {
+        if (authResponse.getStatus() == HttpStatus.OK) {
             return new ResponseEntity<>(authResponse.getJson(), HttpStatus.OK);
         } else {
             return new ResponseEntity<>(authResponse.getJson(), HttpStatus.BAD_REQUEST);
@@ -83,7 +83,7 @@ public class JwtService {
         if (decodedJWT == null) {
             LOGGER.error(errorMessage);
             resultJson.getProperties().put(MESSAGE_CLAIM, errorMessage);
-            internalResponse.setStatus(HttpStatus.BAD_REQUEST.value());
+            internalResponse.setStatus(HttpStatus.BAD_REQUEST);
         } else {
             if (isValidation) {
                 if (WhitelistManager.isTokenWhitelisted(decodedJWT)) {
@@ -93,15 +93,15 @@ public class JwtService {
                         resultJson.getProperties().put(USER_ID_CLAIM, decodedJWT.getClaims().get(USERNAME_CLAIM).asString());
                     }
 
-                    internalResponse.setStatus(HttpStatus.OK.value());
+                    internalResponse.setStatus(HttpStatus.OK);
                 } else {
                     resultJson.getProperties().put(MESSAGE_CLAIM, INFO_MESSAGE_NON_WHITELIST_JWT);
-                    internalResponse.setStatus(HttpStatus.UNAUTHORIZED.value());
+                    internalResponse.setStatus(HttpStatus.UNAUTHORIZED);
                 }
             } else {
                 WhitelistManager.logout(decodedJWT);
                 resultJson.getProperties().put(MESSAGE_CLAIM, INFO_MESSAGE_INVALIDATED_JWT);
-                internalResponse.setStatus(HttpStatus.OK.value());
+                internalResponse.setStatus(HttpStatus.OK);
             }
         }
 
@@ -113,7 +113,7 @@ public class JwtService {
     private ResponseEntity returnResponse(String token, boolean includeUserIdInResponse) {
         final InternalResponse authResponse = validateJWT(token, includeUserIdInResponse, true);
 
-        if (authResponse.getStatus() == HttpStatus.OK.value()) {
+        if (authResponse.getStatus() == HttpStatus.OK) {
             return new ResponseEntity<>(authResponse.getJson(), HttpStatus.OK);
         } else {
             return new ResponseEntity<>(authResponse.getJson(), HttpStatus.UNAUTHORIZED);

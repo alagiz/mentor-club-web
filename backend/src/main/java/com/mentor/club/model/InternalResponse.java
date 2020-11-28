@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import lombok.Getter;
 import lombok.Setter;
+import org.springframework.http.HttpStatus;
 
 public class InternalResponse {
     @Getter
@@ -14,6 +15,5 @@ public class InternalResponse {
     @Getter
     @Setter
     @JsonProperty("status")
-    private int status;
-
+    private HttpStatus status;
 }

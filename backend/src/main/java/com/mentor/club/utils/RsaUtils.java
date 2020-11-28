@@ -22,14 +22,11 @@ import com.auth0.jwt.exceptions.JWTDecodeException;
 import com.auth0.jwt.exceptions.SignatureVerificationException;
 import com.auth0.jwt.interfaces.DecodedJWT;
 
-public class RsaUtils {
+public final class RsaUtils {
     private static final Logger LOGGER = LoggerFactory.getLogger(RsaUtils.class);
 
     public static final Long TOKEN_LIFESPAN = 4L * 3600L;
     public static final String USERNAME_CLAIM = "username";
-
-    private RsaUtils() {
-    }
 
     private static Key loadRSAPublicKey(String stored) throws GeneralSecurityException {
         final byte[] data = Base64.getDecoder().decode(stored.getBytes());
