@@ -77,7 +77,7 @@ public final class RsaUtils {
             Date expirationDate = Date.from(Instant.now().plusSeconds(TOKEN_LIFESPAN));
 
             return JWT.create()
-                    .withIssuer("auth microservice")
+                    .withIssuer("user microservice")
                     .withExpiresAt(expirationDate)
                     .withClaim(USERNAME_CLAIM, username)
                     .withClaim("group", group.toString())
