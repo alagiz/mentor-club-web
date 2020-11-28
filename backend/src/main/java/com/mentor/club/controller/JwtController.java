@@ -20,7 +20,7 @@ class JwtController {
         this.jwtService = jwtService;
     }
 
-    @GetMapping(value = "/validate_jwt")
+    @GetMapping(value = "/validate-jwt")
     @ApiOperation(value = "Validate JWT")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Valid Token"),
@@ -28,25 +28,5 @@ class JwtController {
     })
     public ResponseEntity validateJwt(@ApiParam(value = "'Bearer' Token for validation") @RequestHeader(name = "Authorization") String authorization) {
         return jwtService.validateJWT(authorization);
-    }
-
-    @GetMapping(value = "/validate_jwt/logout")
-    @ApiOperation(value = "User logout - remove JWT from whitelist")
-    @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successfully de-whitelisted the token"),
-            @ApiResponse(code = 400, message = "Invalid token"),
-    })
-    public ResponseEntity invalidateJwt(@ApiParam(value = "'Bearer' User token") @RequestHeader(name = "Authorization") String authorization) {
-        return jwtService.invalidateJWT(authorization);
-    }
-
-    @GetMapping(value = "/user_id_from_jwt")
-    @ApiOperation(value = "User id retrieval - get user id from jwt")
-    @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successfully got user_id"),
-            @ApiResponse(code = 400, message = "Invalid token"),
-    })
-    public ResponseEntity getUserIdFromJwt(@ApiParam(value = "'Bearer' User token") @RequestHeader(name = "Authorization") String authorization) {
-        return jwtService.getUserIdFromJwt(authorization);
     }
 }

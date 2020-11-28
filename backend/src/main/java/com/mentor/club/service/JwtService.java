@@ -51,25 +51,7 @@ public class JwtService {
         this.tokenRepository = tokenRepository;
     }
 
-    public ResponseEntity invalidateJWT(String authorization) {
-        final InternalResponse authResponse = validateJWT(authorization, false, false);
-
-        if (authResponse.getStatus() == HttpStatus.OK) {
-            return new ResponseEntity<>(authResponse.getJson(), HttpStatus.OK);
-        } else {
-            return new ResponseEntity<>(authResponse.getJson(), HttpStatus.BAD_REQUEST);
-        }
-    }
-
     public ResponseEntity validateJWT(String authorization) {
-        return getReturnResponse(authorization, false);
-    }
-
-    public ResponseEntity getUserIdFromJwt(String authorization) {
-        return getReturnResponse(authorization, true);
-    }
-
-    public InternalResponse validateJWT(String authorization, Boolean includeUserIdInResponse, Boolean isValidation) {
         DecodedJWT decodedJWT = null;
         String errorMessage = "";
         String[] splitAuth = authorization.split(" ");
@@ -83,10 +65,16 @@ public class JwtService {
             errorMessage = ERROR_MESSAGE_SIGNATURE_VERIFICATION;
         }
 
-        return validateOrInvalidateJWT(authorization, errorMessage, decodedJWT, isValidation, includeUserIdInResponse);
+        InternalResponse authResponse = checkJwtToken(errorMessage, decodedJWT);
+
+        if (authResponse.getStatus() == HttpStatus.OK) {
+            return new ResponseEntity<>(authResponse.getJson(), HttpStatus.OK);
+        } else {
+            return new ResponseEntity<>(authResponse.getJson(), HttpStatus.UNAUTHORIZED);
+        }
     }
 
-    public InternalResponse validateOrInvalidateJWT(String authorization, String errorMessage, DecodedJWT decodedJWT, Boolean isValidation, Boolean includeUserIdInResponse) {
+    public InternalResponse checkJwtToken(String errorMessage, DecodedJWT decodedJWT) {
         final InternalResponse internalResponse = new InternalResponse();
         final ExtendableResult resultJson = new ExtendableResult();
 
@@ -95,23 +83,14 @@ public class JwtService {
             resultJson.getProperties().put(MESSAGE_CLAIM, errorMessage);
             internalResponse.setStatus(HttpStatus.BAD_REQUEST);
         } else {
-            if (isValidation) {
-                if (isTokenWhitelisted(decodedJWT)) {
-                    resultJson.getProperties().put(MESSAGE_CLAIM, INFO_MESSAGE_VALID_JWT);
+            if (isTokenWhitelisted(decodedJWT)) {
+                resultJson.getProperties().put(MESSAGE_CLAIM, INFO_MESSAGE_VALID_JWT);
+                resultJson.getProperties().put(USER_ID_CLAIM, decodedJWT.getClaims().get(USERNAME_CLAIM).asString());
 
-                    if (includeUserIdInResponse) {
-                        resultJson.getProperties().put(USER_ID_CLAIM, decodedJWT.getClaims().get(USERNAME_CLAIM).asString());
-                    }
-
-                    internalResponse.setStatus(HttpStatus.OK);
-                } else {
-                    resultJson.getProperties().put(MESSAGE_CLAIM, INFO_MESSAGE_NON_WHITELIST_JWT);
-                    internalResponse.setStatus(HttpStatus.UNAUTHORIZED);
-                }
-            } else {
-                logout(authorization, decodedJWT.getClaim("username").asString());
-                resultJson.getProperties().put(MESSAGE_CLAIM, INFO_MESSAGE_INVALIDATED_JWT);
                 internalResponse.setStatus(HttpStatus.OK);
+            } else {
+                resultJson.getProperties().put(MESSAGE_CLAIM, INFO_MESSAGE_NON_WHITELIST_JWT);
+                internalResponse.setStatus(HttpStatus.UNAUTHORIZED);
             }
         }
 
@@ -195,15 +174,4 @@ public class JwtService {
             LOGGER.error("Failed to remove token for user with username " + username + ". Error: " + exception.getMessage());
         }
     }
-
-    private ResponseEntity getReturnResponse(String authorization, boolean includeUserIdInResponse) {
-        final InternalResponse authResponse = validateJWT(authorization, includeUserIdInResponse, true);
-
-        if (authResponse.getStatus() == HttpStatus.OK) {
-            return new ResponseEntity<>(authResponse.getJson(), HttpStatus.OK);
-        } else {
-            return new ResponseEntity<>(authResponse.getJson(), HttpStatus.UNAUTHORIZED);
-        }
-    }
-
 }

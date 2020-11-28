@@ -8,6 +8,6 @@ import lombok.Setter;
 public class PublicKeyResponse {
     @Getter
     @Setter
-    @JsonProperty("public_key")
-    private String public_key;
+    @JsonProperty("publicKey")
+    private String publicKey;
 }
