@@ -1,3 +1,7 @@
+aws:
+  lambda:
+    confirm-email:
+      arn: ${AWS_LAMBDA_CONFIRMATION_EMAIL_ARN}
 spring:
   management:
     endpoint:

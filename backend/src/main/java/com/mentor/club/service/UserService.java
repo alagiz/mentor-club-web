@@ -10,11 +10,11 @@ import org.mindrot.jbcrypt.BCrypt;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -22,23 +22,72 @@ import java.util.Optional;
 import static com.mentor.club.model.error.HttpCallError.INVALID_INPUT;
 
 @Service
-public class AuthenticationService {
-    private static final Logger LOGGER = LoggerFactory.getLogger(AuthenticationService.class);
+public class UserService {
+    private static final Logger LOGGER = LoggerFactory.getLogger(UserService.class);
     private IUserRepository userRepository;
     private ITokenRepository tokenRepository;
+    private AwsService awsService;
+
+    @Value("${backend.deployment.url}")
+    private String backendDeploymentUrl;
 
     @Autowired
-    public AuthenticationService(IUserRepository userRepository, ITokenRepository tokenRepository) {
+    public UserService(IUserRepository userRepository, ITokenRepository tokenRepository, AwsService awsService) {
         this.userRepository = userRepository;
         this.tokenRepository = tokenRepository;
+        this.awsService = awsService;
     }
 
     public ResponseEntity authenticate(AuthenticationRequest authentication) {
         final InternalResponse authResponse = authenticateWithCredentials(authentication);
 
-        // convert internalResponse to authenticationResult
-
         return new ResponseEntity<>(authResponse.getJson(), HttpStatus.OK);
+    }
+
+    public ResponseEntity createNewUser(NewUser newUser) {
+        User user = new User();
+        user.setEmail(newUser.getEmail());
+        user.setUsername(newUser.getUsername());
+        user.setHashedPassword(hashPassword(newUser.getPassword()));
+        user.setName(newUser.getName());
+        user.setThumbnailBase64(newUser.getThumbnailBase64());
+
+        try {
+            User createdUser = userRepository.save(user);
+
+            String confirmationUrl = backendDeploymentUrl + "/user/confirm-email/" + createdUser.getId();
+
+            HttpStatus confirmationEmailSentStatusCode = awsService.sendConfirmationEmail(confirmationUrl, user.getEmail());
+
+            LOGGER.error("Status code of sending confirmation email: " + confirmationEmailSentStatusCode.toString());
+
+            return new ResponseEntity<>(HttpStatus.OK);
+        } catch (Exception exception) {
+            LOGGER.error("Failed to create user with username " + newUser.getUsername() + ". Error: " + exception.getMessage());
+
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    public ResponseEntity confirmEmail(String userId) {
+        try {
+            Optional<User> optionalUser = userRepository.findById(userId);
+
+            if (optionalUser.isPresent()) {
+                User user = optionalUser.get();
+                user.setUserStatus(UserStatus.CREATED_CONFIRMED_EMAIL);
+
+                userRepository.save(user);
+            } else {
+                return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+            }
+
+            return new ResponseEntity<>(HttpStatus.OK);
+        } catch (Exception exception) {
+            LOGGER.error("Failed to confirm email for user with userId " + userId);
+
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
     private InternalResponse authenticateWithCredentials(AuthenticationRequest authentication) {
@@ -90,9 +139,11 @@ public class AuthenticationService {
     }
 
     private String createToken(Optional<User> user) {
-        List<String> userGroups =  Arrays.asList("user"); // change in the future
+        List<String> userGroups = Arrays.asList("user"); // change in the future
         String jwtToken = RsaUtils.generateToken(user.get().getUsername(), userGroups);
+
         Token token = new Token();
+
         token.setToken(jwtToken);
         token.setUserId(user.get().getId());
 
