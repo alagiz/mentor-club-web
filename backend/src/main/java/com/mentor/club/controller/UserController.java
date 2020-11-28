@@ -45,10 +45,21 @@ public class UserController {
     @ApiOperation(value = "Confirm email address")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Authorized"),
-            @ApiResponse(code = 401, message = "Unauthorized"),
+            @ApiResponse(code = 404, message = "User id not found"),
     })
     public ResponseEntity confirmEmail(@ApiParam(value = "Confirm email") @PathVariable String userId) {
         return userService.confirmEmail(userId);
+    }
+
+    @PostMapping
+    @RequestMapping("/logout")
+    @ApiOperation(value = "Logout user")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Authorized"),
+            @ApiResponse(code = 401, message = "Unauthorized"),
+    })
+    public ResponseEntity logout(@ApiParam(value = "Logout user") @RequestHeader(name = "Authorization") String authorization, @RequestParam String username) {
+        return userService.logout(authorization, username);
     }
 
     @GetMapping

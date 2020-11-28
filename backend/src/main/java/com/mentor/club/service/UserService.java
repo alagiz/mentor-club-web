@@ -28,15 +28,17 @@ public class UserService {
     private IUserRepository userRepository;
     private ITokenRepository tokenRepository;
     private AwsService awsService;
+    private JwtService jwtService;
 
     @Value("${backend.deployment.url}")
     private String backendDeploymentUrl;
 
     @Autowired
-    public UserService(IUserRepository userRepository, ITokenRepository tokenRepository, AwsService awsService) {
+    public UserService(IUserRepository userRepository, ITokenRepository tokenRepository, AwsService awsService, JwtService jwtService) {
         this.userRepository = userRepository;
         this.tokenRepository = tokenRepository;
         this.awsService = awsService;
+        this.jwtService = jwtService;
     }
 
     public ResponseEntity authenticate(AuthenticationRequest authentication) {
@@ -169,5 +171,9 @@ public class UserService {
 
     private Boolean checkPassword(String plainPassword, String hashedPassword) {
         return BCrypt.checkpw(plainPassword, hashedPassword);
+    }
+
+    public ResponseEntity logout(String authorization, String username) {
+        return jwtService.logout(authorization, username);
     }
 }
