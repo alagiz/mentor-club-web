@@ -1,5 +1,6 @@
 package com.mentor.club.service;
 
+import com.auth0.jwt.interfaces.DecodedJWT;
 import com.mentor.club.exception.InternalException;
 import com.mentor.club.model.*;
 import com.mentor.club.repository.ITokenRepository;

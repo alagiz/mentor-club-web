@@ -67,8 +67,6 @@ public class JwtService {
             decodedJWT = RsaUtils.decodeToken(token);
         } catch (JWTDecodeException exception) {
             errorMessage = ERROR_MESSAGE_INVALID_TOKEN;
-        } catch (GeneralSecurityException e) {
-            errorMessage = ERROR_MESSAGE_CRYPTO_ALGORITHM;
         } catch (SignatureVerificationException ex) {
             errorMessage = ERROR_MESSAGE_SIGNATURE_VERIFICATION;
         }

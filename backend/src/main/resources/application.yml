@@ -2,6 +2,14 @@ aws:
   lambda:
     confirm-email:
       arn: ${AWS_LAMBDA_CONFIRMATION_EMAIL_ARN}
+backend:
+  deployment:
+    url: ${BACKEND_DEPLOYMENT_URL}
+pem:
+  keys:
+    path:
+      public: ${PUBLIC_KEY_PATH}
+      private: ${PRIVATE_KEY_PATH}
 spring:
   management:
     endpoint:

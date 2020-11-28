@@ -1,5 +1,22 @@
 package com.mentor.club.utils;
 
+import com.auth0.jwt.JWT;
+import com.auth0.jwt.algorithms.Algorithm;
+import com.auth0.jwt.exceptions.JWTCreationException;
+import com.auth0.jwt.exceptions.JWTDecodeException;
+import com.auth0.jwt.exceptions.SignatureVerificationException;
+import com.auth0.jwt.interfaces.DecodedJWT;
+import com.mentor.club.exception.InternalException;
+import com.mentor.club.model.error.HttpCallError;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
+
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.security.GeneralSecurityException;
 import java.security.Key;
 import java.security.KeyFactory;
@@ -12,41 +29,52 @@ import java.util.Base64;
 import java.util.Date;
 import java.util.List;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.auth0.jwt.JWT;
-import com.auth0.jwt.algorithms.Algorithm;
-import com.auth0.jwt.exceptions.JWTCreationException;
-import com.auth0.jwt.exceptions.JWTDecodeException;
-import com.auth0.jwt.exceptions.SignatureVerificationException;
-import com.auth0.jwt.interfaces.DecodedJWT;
-
 public final class RsaUtils {
     private static final Logger LOGGER = LoggerFactory.getLogger(RsaUtils.class);
 
     public static final Long TOKEN_LIFESPAN = 4L * 3600L;
     public static final String USERNAME_CLAIM = "username";
 
-    private static Key loadRSAPublicKey(String stored) throws GeneralSecurityException {
-        final byte[] data = Base64.getDecoder().decode(stored.getBytes());
-        final X509EncodedKeySpec spec = new X509EncodedKeySpec(data);
-        final KeyFactory fact = KeyFactory.getInstance("RSA");
-        return fact.generatePublic(spec);
+    @Value("${pem.keys.path.public}")
+    private static String publicKeyPath;
+
+    @Value("${pem.keys.path.private}")
+    private static String privateKeyPath;
+
+    private static Key loadRSAPublicKey() {
+        try {
+            String publicKeyContent = new String(Files.readAllBytes(Paths.get(ClassLoader.getSystemResource(publicKeyPath).toURI())));
+            publicKeyContent = publicKeyContent.replaceAll("\\n", "").replace("-----BEGIN PUBLIC KEY-----", "").replace("-----END PUBLIC KEY-----", "");
+            KeyFactory keyFactory = KeyFactory.getInstance("RSA");
+            X509EncodedKeySpec keySpecX509 = new X509EncodedKeySpec(Base64.getDecoder().decode(publicKeyContent));
+
+            return keyFactory.generatePublic(keySpecX509);
+        } catch (GeneralSecurityException | URISyntaxException | IOException exception) {
+            LOGGER.error("Failed to load public key. Error: " + exception.getMessage());
+
+            throw new InternalException(HttpStatus.INTERNAL_SERVER_ERROR, HttpCallError.READ_INPUT_STREAM);
+        }
     }
 
-    private static Key loadRSAPrivateKey(String stored) throws GeneralSecurityException {
-        final byte[] data = Base64.getDecoder().decode(stored.getBytes());
-        final PKCS8EncodedKeySpec spec = new PKCS8EncodedKeySpec(data);
-        final KeyFactory fact = KeyFactory.getInstance("RSA");
-        return fact.generatePrivate(spec);
+    private static Key loadRSAPrivateKey() {
+        try {
+            String privateKeyContent = new String(Files.readAllBytes(Paths.get(ClassLoader.getSystemResource(privateKeyPath).toURI())));
+            privateKeyContent = privateKeyContent.replaceAll("\\n", "").replace("-----BEGIN PRIVATE KEY-----", "").replace("-----END PRIVATE KEY-----", "");
+            KeyFactory keyFactory = KeyFactory.getInstance("RSA");
+            PKCS8EncodedKeySpec keySpecPKCS8 = new PKCS8EncodedKeySpec(Base64.getDecoder().decode(privateKeyContent));
+
+            return keyFactory.generatePrivate(keySpecPKCS8);
+        } catch (GeneralSecurityException | URISyntaxException | IOException exception) {
+            LOGGER.error("Failed to load private key. Error: " + exception.getMessage());
+
+            throw new InternalException(HttpStatus.INTERNAL_SERVER_ERROR, HttpCallError.READ_INPUT_STREAM);
+        }
     }
 
     public static String generateToken(String username, List<String> group) {
         try {
-            final Algorithm algorithm = getRsaAlgorithm();
-
-            final Date expirationDate = Date.from(Instant.now().plusSeconds(TOKEN_LIFESPAN));
+            Algorithm algorithm = getRsaAlgorithm();
+            Date expirationDate = Date.from(Instant.now().plusSeconds(TOKEN_LIFESPAN));
 
             return JWT.create()
                     .withIssuer("auth microservice")
@@ -56,24 +84,23 @@ public final class RsaUtils {
                     .sign(algorithm);
         } catch (JWTCreationException exception) {
             LOGGER.error("Error creating the JWT.");
-        } catch (GeneralSecurityException gse) {
-            LOGGER.error("Could not create the crypto algorithm related needed data.");
         }
+
         return null;
     }
 
-    private static Algorithm getRsaAlgorithm() throws GeneralSecurityException {
-        // get PUBLIC_KEY and PRIVATE_KEY from docker volume
+    private static Algorithm getRsaAlgorithm() {
+        RSAPublicKey publicKey = (RSAPublicKey) loadRSAPublicKey();
+        RSAPrivateKey privateKey = (RSAPrivateKey) loadRSAPrivateKey();
 
-        // final RSAPublicKey publicKey = (RSAPublicKey) loadRSAPublicKey(PropertiesManager.getProperty("PUBLIC_KEY"));
-        // final RSAPrivateKey privateKey = (RSAPrivateKey) loadRSAPrivateKey(PropertiesManager.getProperty("PRIVATE_KEY"));
-
-        // return Algorithm.RSA256(publicKey, privateKey);
+        return Algorithm.RSA256(publicKey, privateKey);
     }
 
-    public static DecodedJWT decodeToken(String token) throws JWTDecodeException, GeneralSecurityException, SignatureVerificationException {
-        final DecodedJWT jwt = JWT.decode(token);
+    public static DecodedJWT decodeToken(String token) throws JWTDecodeException, SignatureVerificationException {
+        DecodedJWT jwt = JWT.decode(token);
+
         getRsaAlgorithm().verify(jwt);
+
         return jwt;
     }
 }

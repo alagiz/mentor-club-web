@@ -10,7 +10,7 @@ public enum HttpCallError {
     INVALID_INPUT("Invalid input"),
     SERVICE_UNAVAILABLE("Service unavailable"),
     EXTERNAL_ERROR("Error while trying to handle some external error"),
-    READ_INPUTSTREAM("Error while trying to read data from an inputstream"),
+    READ_INPUT_STREAM("Error while trying to read data from an input stream"),
     DESERIALIZE("Error while trying to deserialize data"),
     SERIALIZE("Error while trying to serialize data");
 
