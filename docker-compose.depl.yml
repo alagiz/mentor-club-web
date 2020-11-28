@@ -1,0 +1,43 @@
+version: '3.2'
+services:
+  frontend:
+    image: alagiz/mentor-club-web-frontend:latest
+    command: ["/bin/bash", "-c", "/usr/share/nginx/html/env.sh && nginx -g \"daemon off;\""]
+    environment:
+      - BACKEND_URL=https://artem-alagizov.com/mentor-club-backend
+    ports:
+      - 8111:80
+  backend:
+    image: alagiz/mentor-club-web-backend:latest
+    environment:
+      - BACKEND_DEPLOYMENT_URL=https://artem-alagizov.com/mentor-club-backend
+      - AWS_LAMBDA_CONFIRMATION_EMAIL_ARN=arn:aws:lambda:us-east-2:260654294406:function:ses
+      - PUBLIC_KEY_PATH=public_key.pem
+      - PRIVATE_KEY_PATH=private_key_pkcs8.pem
+      - POSTGRES_URL=postgres:5432
+      - POSTGRES_DB_NAME=postgres
+      - POSTGRES_USER_NAME=postgres
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 300M
+        reservations:
+          cpus: '0.1'
+          memory: 10M
+    ports:
+      - 8112:8080
+  db:
+    image: alagiz/mentor-club-web-db:latest
+    volumes:
+      - /var/lib/postgresql/data
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 150M
+        reservations:
+          cpus: '0.1'
+          memory: 10M
+    ports:
+      - 8113:5432

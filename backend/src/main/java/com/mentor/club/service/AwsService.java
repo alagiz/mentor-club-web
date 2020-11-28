@@ -32,11 +32,11 @@ public class AwsService {
 
             String inputJSON = new Gson().toJson(lambdaRequest);
 
-            InvokeRequest lmbRequest = new InvokeRequest()
+            InvokeRequest lambdaRequestResult = new InvokeRequest()
                     .withFunctionName(confirmEmailLambdaArn)
                     .withPayload(inputJSON);
 
-            lmbRequest.setInvocationType(InvocationType.RequestResponse);
+            lambdaRequestResult.setInvocationType(InvocationType.RequestResponse);
 
             // check how to pass region with env variable
             // check if credentials need to be set when ec2 already has permissions, code for that:
@@ -49,10 +49,12 @@ public class AwsService {
             //        .withRegion(Regions.US_EAST_1)
             //        .withCredentials(new AWSStaticCredentialsProvider(credentials)).build();
             // =====================================================================================
-            AWSLambda lambda = AWSLambdaClientBuilder.standard()
-                    .withRegion(Regions.US_EAST_2).build();
+            AWSLambda lambda = AWSLambdaClientBuilder
+                    .standard()
+                    .withRegion(Regions.US_EAST_2)
+                    .build();
 
-            InvokeResult invokeResult = lambda.invoke(lmbRequest);
+            InvokeResult invokeResult = lambda.invoke(lambdaRequestResult);
 
             return HttpStatus.valueOf(invokeResult.getStatusCode());
         } catch (Exception exception) {
