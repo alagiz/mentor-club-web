@@ -9,3 +9,4 @@ FROM openjdk:8-jre-alpine
 
 COPY src/main/resources /app/src/main/resources
 COPY --from=BUILD /usr/src/app/target/*.jar  /app.jar
+RUN apk add --no-cache bash
