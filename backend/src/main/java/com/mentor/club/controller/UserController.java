@@ -2,6 +2,7 @@ package com.mentor.club.controller;
 
 import com.mentor.club.model.AuthenticationRequest;
 import com.mentor.club.model.NewUser;
+import com.mentor.club.service.JwtService;
 import com.mentor.club.service.UserService;
 import io.swagger.annotations.*;
 import lombok.Getter;
@@ -17,6 +18,10 @@ public class UserController {
     @Getter
     @Setter
     protected UserService userService;
+
+    public UserController(UserService userService) {
+        this.userService = userService;
+    }
 
     @PostMapping
     @RequestMapping("/authenticate")
