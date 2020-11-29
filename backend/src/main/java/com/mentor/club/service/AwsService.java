@@ -1,5 +1,8 @@
 package com.mentor.club.service;
 
+import com.amazonaws.auth.AWSCredentials;
+import com.amazonaws.auth.AWSStaticCredentialsProvider;
+import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.lambda.AWSLambda;
 import com.amazonaws.services.lambda.AWSLambdaClientBuilder;
@@ -22,6 +25,12 @@ public class AwsService {
     @Value("${aws.lambda.confirm-email.arn}")
     private String confirmEmailLambdaArn;
 
+    @Value("${aws.lambda.access-key-id}")
+    private String lambdaAccessKeyId;
+
+    @Value("${aws.lambda.secret-access-key}")
+    private String lambdaSecretAccessKey;
+
     @LambdaFunction(functionName = "ses")
     public HttpStatus sendConfirmationEmail(String confirmationUrl, String email) {
         try {
@@ -39,20 +48,10 @@ public class AwsService {
             lambdaRequestResult.setInvocationType(InvocationType.RequestResponse);
 
             // check how to pass region with env variable
-            // check if credentials need to be set when ec2 already has permissions, code for that:
-            // =====================================================================================
-            //    final String AWS_ACCESS_KEY_ID = "xx";
-            //    final String AWS_SECRET_ACCESS_KEY = "xx";
-            //
-            //    AWSCredentials credentials = new BasicAWSCredentials(AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY);
-            //    AWSLambda lambda = AWSLambdaClientBuilder.standard()
-            //        .withRegion(Regions.US_EAST_1)
-            //        .withCredentials(new AWSStaticCredentialsProvider(credentials)).build();
-            // =====================================================================================
-            AWSLambda lambda = AWSLambdaClientBuilder
-                    .standard()
-                    .withRegion(Regions.US_EAST_2)
-                    .build();
+            AWSCredentials credentials = new BasicAWSCredentials(lambdaAccessKeyId, lambdaSecretAccessKey);
+            AWSLambda lambda = AWSLambdaClientBuilder.standard()
+                    .withRegion(Regions.US_EAST_1)
+                    .withCredentials(new AWSStaticCredentialsProvider(credentials)).build();
 
             InvokeResult invokeResult = lambda.invoke(lambdaRequestResult);
 

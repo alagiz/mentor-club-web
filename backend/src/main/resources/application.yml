@@ -1,5 +1,7 @@
 aws:
   lambda:
+    access-key-id: ${AWS_ACCESS_KEY_ID}
+    secret-access-key: ${AWS_SECRET_ACCESS_KEY}
     confirm-email:
       arn: ${AWS_LAMBDA_CONFIRMATION_EMAIL_ARN}
 backend:

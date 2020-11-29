@@ -5,6 +5,8 @@ services:
     environment:
       - BACKEND_DEPLOYMENT_URL=https://artem-alagizov.com/mentor-club-backend
       - AWS_LAMBDA_CONFIRMATION_EMAIL_ARN=arn:aws:lambda:us-east-2:260654294406:function:ses
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
       - PUBLIC_KEY_PATH=certificates/public_key.pem
       - PRIVATE_KEY_PATH=certificates/private_key_pkcs8.pem
       - POSTGRES_URL=db:5432
