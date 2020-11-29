@@ -7,6 +7,7 @@ RUN mvn -f /usr/src/app/pom.xml install
 
 FROM openjdk:8-jre-alpine
 
-COPY src/main/resources /app/src/main/resources
-COPY --from=BUILD /usr/src/app/target/*.jar  /app.jar
+COPY --from=BUILD /usr/src/app/target/*.jar  /usr/app/app.jar
+WORKDIR /usr/app
+
 RUN apk add --no-cache bash

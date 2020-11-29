@@ -1,27 +1,31 @@
 package com.mentor.club.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 
-import javax.persistence.Column;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
+import javax.persistence.*;
 
+@Entity
+@Getter
+@Setter
 public class Token {
     @Id
     @Column(name = "id")
+    @Setter(AccessLevel.NONE)
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private String id;
 
-    @Getter
-    @Setter
+    @Column(name = "token")
     @JsonProperty("token")
     private String token;
 
-    @Getter
-    @Setter
+    @Column(name = "userId")
     @JsonProperty("userId")
     private String userId;
+
+    @Column(name = "expiresAt")
+    @JsonProperty("expiresAt")
+    private String expiresAt;
 }
