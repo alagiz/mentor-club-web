@@ -22,6 +22,7 @@ import java.time.Instant;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import static com.mentor.club.utils.RsaUtils.USERNAME_CLAIM;
 
@@ -112,7 +113,7 @@ public class JwtService {
             Optional<User> optionalUser = userRepository.findUserByUsername(username);
 
             if (optionalUser.isPresent()) {
-                String userId = optionalUser.get().getId();
+                UUID userId = optionalUser.get().getId();
                 List<Token> userTokens = tokenRepository.findByUserId(userId);
 
                 userTokens.stream().forEach(token -> tokenRepository.delete(token));

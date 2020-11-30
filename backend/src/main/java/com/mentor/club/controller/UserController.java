@@ -2,13 +2,14 @@ package com.mentor.club.controller;
 
 import com.mentor.club.model.AuthenticationRequest;
 import com.mentor.club.model.NewUser;
-import com.mentor.club.service.JwtService;
 import com.mentor.club.service.UserService;
 import io.swagger.annotations.*;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.UUID;
 
 @CrossOrigin()
 @RestController
@@ -46,13 +47,13 @@ public class UserController {
     }
 
     @GetMapping
-    @RequestMapping("/confirm-email")
+    @RequestMapping("/confirm-email/{userId}")
     @ApiOperation(value = "Confirm email address")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Authorized"),
             @ApiResponse(code = 404, message = "User id not found"),
     })
-    public ResponseEntity confirmEmail(@ApiParam(value = "Confirm email") @PathVariable String userId) {
+    public ResponseEntity confirmEmail(@ApiParam(value = "Confirm email") @PathVariable UUID userId) {
         return userService.confirmEmail(userId);
     }
 

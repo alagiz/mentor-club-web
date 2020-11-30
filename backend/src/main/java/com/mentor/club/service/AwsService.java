@@ -50,7 +50,7 @@ public class AwsService {
             // check how to pass region with env variable
             AWSCredentials credentials = new BasicAWSCredentials(lambdaAccessKeyId, lambdaSecretAccessKey);
             AWSLambda lambda = AWSLambdaClientBuilder.standard()
-                    .withRegion(Regions.US_EAST_1)
+                    .withRegion(Regions.US_EAST_2)
                     .withCredentials(new AWSStaticCredentialsProvider(credentials)).build();
 
             InvokeResult invokeResult = lambda.invoke(lambdaRequestResult);

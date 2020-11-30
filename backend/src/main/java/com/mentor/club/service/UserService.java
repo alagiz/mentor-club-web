@@ -19,6 +19,7 @@ import org.springframework.stereotype.Service;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import static com.mentor.club.model.error.HttpCallError.INVALID_INPUT;
 
@@ -44,7 +45,7 @@ public class UserService {
     public ResponseEntity authenticate(AuthenticationRequest authentication) {
         final InternalResponse authResponse = authenticateWithCredentials(authentication);
 
-        return new ResponseEntity<>(authResponse.getJson(), HttpStatus.OK);
+        return new ResponseEntity<>(authResponse.getJson(), authResponse.getStatus());
     }
 
     public ResponseEntity createNewUser(NewUser newUser) {
@@ -62,7 +63,7 @@ public class UserService {
 
             HttpStatus confirmationEmailSentStatusCode = awsService.sendConfirmationEmail(confirmationUrl, user.getEmail());
 
-            LOGGER.error("Status code of sending confirmation email: " + confirmationEmailSentStatusCode.toString());
+            LOGGER.debug("Status code of sending confirmation email: " + confirmationEmailSentStatusCode.toString());
 
             return new ResponseEntity<>(HttpStatus.OK);
         } catch (Exception exception) {
@@ -72,7 +73,7 @@ public class UserService {
         }
     }
 
-    public ResponseEntity confirmEmail(String userId) {
+    public ResponseEntity confirmEmail(UUID userId) {
         try {
             Optional<User> optionalUser = userRepository.findById(userId);
 
@@ -113,7 +114,7 @@ public class UserService {
             }
 
             if (checkPassword(password, user.get().getHashedPassword())) {
-                LOGGER.error("Correct password for user with username " + username + "!");
+                LOGGER.debug("Correct password for user with username " + username + "!");
 
                 result.setUsername(username);
                 result.setThumbnailPhoto(user.get().getThumbnailBase64());

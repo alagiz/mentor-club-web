@@ -1,24 +1,24 @@
 package com.mentor.club.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 
 import javax.persistence.*;
+import java.util.UUID;
 
 @Entity
-@Table(name="users")
+@Table(name = "users")
 @Getter
 @Setter
 public class User {
     @Id
     @Getter
-    @Column(name = "id")
+    @Column(name = "id", columnDefinition = "uuid")
     @Setter(AccessLevel.NONE)
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private String id;
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    private UUID id;
 
     @Column(name = "name")
     @JsonProperty("name")

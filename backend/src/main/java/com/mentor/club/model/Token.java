@@ -6,6 +6,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import javax.persistence.*;
+import java.util.UUID;
 
 @Entity
 @Getter
@@ -23,7 +24,7 @@ public class Token {
 
     @Column(name = "userId")
     @JsonProperty("userId")
-    private String userId;
+    private UUID userId;
 
     @Column(name = "expiresAt")
     @JsonProperty("expiresAt")
