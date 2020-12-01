@@ -1,6 +1,7 @@
 package com.mentor.club.service;
 
 import com.auth0.jwt.interfaces.DecodedJWT;
+import com.google.gson.Gson;
 import com.mentor.club.exception.InternalException;
 import com.mentor.club.model.*;
 import com.mentor.club.repository.ITokenRepository;
@@ -49,6 +50,15 @@ public class UserService {
     }
 
     public ResponseEntity createNewUser(NewUser newUser) {
+        if (isEmailAlreadyInUse(newUser.getEmail())) {
+            Optional<User> userWithGivenEmail = userRepository.findUserByEmail(newUser.getEmail());
+
+            String username = userWithGivenEmail.get().getUsername();
+            String message = "{\"error\":\"email already in use by user with username \'" + username + "\'\"}";
+
+            return new ResponseEntity<>(new Gson().toJson(message), HttpStatus.BAD_REQUEST);
+        }
+
         User user = new User();
         user.setEmail(newUser.getEmail());
         user.setUsername(newUser.getUsername());
@@ -176,5 +186,11 @@ public class UserService {
 
     public ResponseEntity logout(String authorization, String username) {
         return jwtService.logout(authorization, username);
+    }
+
+    private boolean isEmailAlreadyInUse(String email) {
+        Optional<User> userWithGivenEmail = userRepository.findUserByEmail(email);
+
+        return userWithGivenEmail.isPresent();
     }
 }
