@@ -1,6 +1,4 @@
 # mentor-club-web
-web for [mentor-club](https://github.com/ArtemAlagizov/mentor-club)
-
 [![build status][build badge]][BUILD_URL]
 [![coverage status][coverage badge]][COVERAGE_URL]
 [![codacy quality status][quality badge]][QUALITY_URL]
