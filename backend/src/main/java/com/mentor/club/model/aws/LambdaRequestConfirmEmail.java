@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
 import lombok.Setter;
 
-public class LambdaRequest {
+public class LambdaRequestConfirmEmail implements ILambdaRequest {
     @Getter
     @Setter
     @JsonProperty("confirmationUrl")

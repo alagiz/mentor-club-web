@@ -10,8 +10,8 @@ import com.amazonaws.services.lambda.invoke.LambdaFunction;
 import com.amazonaws.services.lambda.model.InvocationType;
 import com.amazonaws.services.lambda.model.InvokeRequest;
 import com.amazonaws.services.lambda.model.InvokeResult;
-import com.google.gson.Gson;
-import com.mentor.club.model.aws.LambdaRequest;
+import com.mentor.club.model.aws.ILambdaRequest;
+import com.mentor.club.model.aws.LambdaRequestConfirmEmail;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -22,7 +22,7 @@ import org.springframework.stereotype.Service;
 public class AwsService {
     private static final Logger LOGGER = LoggerFactory.getLogger(AwsService.class);
 
-    @Value("${aws.lambda.confirm-email.arn}")
+    @Value("${aws.lambda.arn.confirm-email}")
     private String confirmEmailLambdaArn;
 
     @Value("${aws.lambda.access-key-id}")
@@ -33,16 +33,20 @@ public class AwsService {
 
     @LambdaFunction(functionName = "ses")
     public HttpStatus sendConfirmationEmail(String confirmationUrl, String email) {
+        LambdaRequestConfirmEmail lambdaRequestConfirmEmail = new LambdaRequestConfirmEmail();
+
+        lambdaRequestConfirmEmail.setEmail(email);
+        lambdaRequestConfirmEmail.setConfirmationUrl(confirmationUrl);
+
+        return invokeLambda(lambdaRequestConfirmEmail, confirmEmailLambdaArn);
+    }
+
+    private HttpStatus invokeLambda(ILambdaRequest lambdaRequest, String lambdaArn) {
         try {
-            LambdaRequest lambdaRequest = new LambdaRequest();
-
-            lambdaRequest.setEmail(email);
-            lambdaRequest.setConfirmationUrl(confirmationUrl);
-
-            String inputJSON = new Gson().toJson(lambdaRequest);
+            String inputJSON = lambdaRequest.toJson(lambdaRequest);
 
             InvokeRequest lambdaRequestResult = new InvokeRequest()
-                    .withFunctionName(confirmEmailLambdaArn)
+                    .withFunctionName(lambdaArn)
                     .withPayload(inputJSON);
 
             lambdaRequestResult.setInvocationType(InvocationType.RequestResponse);
@@ -57,7 +61,7 @@ public class AwsService {
 
             return HttpStatus.valueOf(invokeResult.getStatusCode());
         } catch (Exception exception) {
-            LOGGER.error("Failed to send confirmation email to " + email + ". Error: " + exception.getMessage());
+            LOGGER.error("Failed to execute lambda " + lambdaArn + ". Error: " + exception.getMessage());
 
             return HttpStatus.BAD_REQUEST;
         }
