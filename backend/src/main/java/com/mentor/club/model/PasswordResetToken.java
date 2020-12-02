@@ -8,7 +8,7 @@ import java.util.Date;
 
 @Entity
 public class PasswordResetToken {
-    private static final int EXPIRATION = 60 * 24;
+    public static final Long PASSWORD_RESET_TOKEN_LIFESPAN_IN_SECONDS = 24L * 3600L;
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
@@ -27,4 +27,13 @@ public class PasswordResetToken {
     @Setter
     @Getter
     private Date expirationDate;
+
+    @Override
+    public String toString() {
+        StringBuilder builder = new StringBuilder();
+
+        builder.append("Token [String=").append(token).append("]").append("[Expires").append(expirationDate).append("]");
+
+        return builder.toString();
+    }
 }

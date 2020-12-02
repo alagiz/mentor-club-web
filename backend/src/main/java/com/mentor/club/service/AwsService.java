@@ -10,8 +10,11 @@ import com.amazonaws.services.lambda.invoke.LambdaFunction;
 import com.amazonaws.services.lambda.model.InvocationType;
 import com.amazonaws.services.lambda.model.InvokeRequest;
 import com.amazonaws.services.lambda.model.InvokeResult;
+import com.mentor.club.model.User;
 import com.mentor.club.model.aws.ILambdaRequest;
-import com.mentor.club.model.aws.LambdaRequestConfirmEmail;
+import com.mentor.club.model.aws.LambdaRequestSendConfirmationEmail;
+import com.mentor.club.model.aws.LambdaRequestSendEmailToConfirmEmail;
+import com.mentor.club.model.aws.LambdaRequestSendEmailToResetPassword;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -31,24 +34,21 @@ public class AwsService {
     @Value("${aws.lambda.secret-access-key}")
     private String lambdaSecretAccessKey;
 
-    @LambdaFunction(functionName = "ses")
-    public HttpStatus sendConfirmationEmail(String confirmationUrl, String email) {
-        LambdaRequestConfirmEmail lambdaRequestConfirmEmail = new LambdaRequestConfirmEmail();
+    public HttpStatus sendConfirmationEmail(String confirmationUrl, User user) {
+        ILambdaRequest lambdaRequest = new LambdaRequestSendEmailToConfirmEmail(confirmationUrl, user.getEmail(), user.getUsername());
 
-        lambdaRequestConfirmEmail.setEmail(email);
-        lambdaRequestConfirmEmail.setConfirmationUrl(confirmationUrl);
-
-        return invokeLambda(lambdaRequestConfirmEmail, confirmEmailLambdaArn);
+        return invokeSendConfirmationEmailLambda(lambdaRequest);
     }
 
-    @LambdaFunction(functionName = "send-password-reset-email")
-    public HttpStatus sendPasswordResetEmail(String resetPasswordUrl, String email) {
-        LambdaRequestConfirmEmail lambdaRequestConfirmEmail = new LambdaRequestConfirmEmail();
+    public HttpStatus sendPasswordResetEmail(String confirmationUrl, User user) {
+        ILambdaRequest lambdaRequest = new LambdaRequestSendEmailToResetPassword(confirmationUrl, user.getEmail(), user.getUsername());
 
-        lambdaRequestConfirmEmail.setEmail(email);
-        lambdaRequestConfirmEmail.setConfirmationUrl(resetPasswordUrl);
+        return invokeSendConfirmationEmailLambda(lambdaRequest);
+    }
 
-        return invokeLambda(lambdaRequestConfirmEmail, confirmEmailLambdaArn);
+    @LambdaFunction(functionName = "ses")
+    private HttpStatus invokeSendConfirmationEmailLambda(ILambdaRequest lambdaRequest) {
+        return invokeLambda(lambdaRequest, confirmEmailLambdaArn);
     }
 
     private HttpStatus invokeLambda(ILambdaRequest lambdaRequest, String lambdaArn) {

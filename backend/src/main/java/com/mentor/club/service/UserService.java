@@ -3,7 +3,7 @@ package com.mentor.club.service;
 import com.google.gson.Gson;
 import com.mentor.club.exception.InternalException;
 import com.mentor.club.model.*;
-import com.mentor.club.repository.IJwtTokenRepository;
+import com.mentor.club.repository.IAccessTokenRepository;
 import com.mentor.club.repository.IPasswordResetTokenRepository;
 import com.mentor.club.repository.IUserRepository;
 import com.mentor.club.utils.RsaUtils;
@@ -17,28 +17,31 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import java.time.Instant;
 import java.util.*;
 
+import static com.mentor.club.model.PasswordResetToken.PASSWORD_RESET_TOKEN_LIFESPAN_IN_SECONDS;
 import static com.mentor.club.model.error.HttpCallError.INVALID_INPUT;
 
 @Service
 public class UserService {
     private static final Logger LOGGER = LoggerFactory.getLogger(UserService.class);
     private IUserRepository userRepository;
-    private IJwtTokenRepository tokenRepository;
-    private IPasswordResetTokenRepository passwordResetTokenRepository;
+    private IAccessTokenRepository tokenRepository;
     private AwsService awsService;
     private JwtService jwtService;
+    private IPasswordResetTokenRepository passwordResetTokenRepository;
 
     @Value("${backend.deployment.url}")
     private String backendDeploymentUrl;
 
     @Autowired
-    public UserService(IUserRepository userRepository, IJwtTokenRepository tokenRepository, AwsService awsService, JwtService jwtService) {
+    public UserService(IUserRepository userRepository, IAccessTokenRepository tokenRepository, AwsService awsService, JwtService jwtService, IPasswordResetTokenRepository passwordResetTokenRepository) {
         this.userRepository = userRepository;
         this.tokenRepository = tokenRepository;
         this.awsService = awsService;
         this.jwtService = jwtService;
+        this.passwordResetTokenRepository = passwordResetTokenRepository;
     }
 
     public ResponseEntity authenticate(AuthenticationRequest authentication) {
@@ -69,7 +72,7 @@ public class UserService {
 
             String confirmationUrl = backendDeploymentUrl + "/user/confirm-email/" + createdUser.getId();
 
-            HttpStatus confirmationEmailSentStatusCode = awsService.sendConfirmationEmail(confirmationUrl, user.getEmail());
+            HttpStatus confirmationEmailSentStatusCode = awsService.sendConfirmationEmail(confirmationUrl, user);
 
             LOGGER.debug("Status code of sending confirmation email: " + confirmationEmailSentStatusCode.toString());
 
@@ -154,14 +157,14 @@ public class UserService {
         List<String> userGroups = Arrays.asList("user"); // change in the future
         String jwtToken = RsaUtils.generateToken(user.get().getUsername(), userGroups);
 
-        JwtToken token = new JwtToken();
+        AccessToken accessToken = new AccessToken();
 
-        token.setToken(jwtToken);
-        token.setUserId(user.get().getId());
+        accessToken.setToken(jwtToken);
+        accessToken.setUserId(user.get().getId());
 
-        tokenRepository.save(token);
+        tokenRepository.save(accessToken);
 
-        return token.getToken();
+        return accessToken.getToken();
     }
 
     public PublicKeyResponse getPublicKeyResponse() {
@@ -201,7 +204,7 @@ public class UserService {
 
         PasswordResetToken passwordResetToken = createPasswordResetTokenForUser(userWithGivenEmail.get());
         String resetPasswordUrl = backendDeploymentUrl + "/user/change-password?token=" + passwordResetToken.getToken();
-        HttpStatus passwordResetEmailSentStatusCode = awsService.sendPasswordResetEmail(resetPasswordUrl, userWithGivenEmail.get().getEmail());
+        HttpStatus passwordResetEmailSentStatusCode = awsService.sendPasswordResetEmail(resetPasswordUrl, userWithGivenEmail.get());
 
         LOGGER.debug("Status code of sending password reset email: " + passwordResetEmailSentStatusCode.toString());
 
@@ -241,6 +244,7 @@ public class UserService {
 
         passwordResetToken.setToken(token);
         passwordResetToken.setUser(user);
+        passwordResetToken.setExpirationDate(Date.from(Instant.now().plusSeconds(PASSWORD_RESET_TOKEN_LIFESPAN_IN_SECONDS)));
 
         return passwordResetTokenRepository.save(passwordResetToken);
     }

@@ -11,7 +11,7 @@ import java.util.UUID;
 @Entity
 @Getter
 @Setter
-public class JwtToken {
+public class AccessToken {
     @Id
     @Column(name = "id")
     @Setter(AccessLevel.NONE)
