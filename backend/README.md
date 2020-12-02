@@ -4,6 +4,7 @@
   * https://www.baeldung.com/java-read-pem-file-keys
   * https://medium.com/@angela.amarapala/sending-email-confirmation-for-account-activation-with-spring-java-cc3f5bb1398e
   * https://www.baeldung.com/spring-security-registration-i-forgot-my-password
+  * https://medium.com/wolox/securing-applications-with-jwt-spring-boot-da24d3d98f83
 
 Spring boot dockerized service template with an example.
 
