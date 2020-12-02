@@ -1,10 +1,10 @@
 package com.mentor.club.service;
 
-import com.auth0.jwt.interfaces.DecodedJWT;
 import com.google.gson.Gson;
 import com.mentor.club.exception.InternalException;
 import com.mentor.club.model.*;
-import com.mentor.club.repository.ITokenRepository;
+import com.mentor.club.repository.IJwtTokenRepository;
+import com.mentor.club.repository.IPasswordResetTokenRepository;
 import com.mentor.club.repository.IUserRepository;
 import com.mentor.club.utils.RsaUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
@@ -17,10 +17,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 import static com.mentor.club.model.error.HttpCallError.INVALID_INPUT;
 
@@ -28,7 +25,8 @@ import static com.mentor.club.model.error.HttpCallError.INVALID_INPUT;
 public class UserService {
     private static final Logger LOGGER = LoggerFactory.getLogger(UserService.class);
     private IUserRepository userRepository;
-    private ITokenRepository tokenRepository;
+    private IJwtTokenRepository tokenRepository;
+    private IPasswordResetTokenRepository passwordResetTokenRepository;
     private AwsService awsService;
     private JwtService jwtService;
 
@@ -36,7 +34,7 @@ public class UserService {
     private String backendDeploymentUrl;
 
     @Autowired
-    public UserService(IUserRepository userRepository, ITokenRepository tokenRepository, AwsService awsService, JwtService jwtService) {
+    public UserService(IUserRepository userRepository, IJwtTokenRepository tokenRepository, AwsService awsService, JwtService jwtService) {
         this.userRepository = userRepository;
         this.tokenRepository = tokenRepository;
         this.awsService = awsService;
@@ -156,7 +154,7 @@ public class UserService {
         List<String> userGroups = Arrays.asList("user"); // change in the future
         String jwtToken = RsaUtils.generateToken(user.get().getUsername(), userGroups);
 
-        Token token = new Token();
+        JwtToken token = new JwtToken();
 
         token.setToken(jwtToken);
         token.setUserId(user.get().getId());
@@ -192,5 +190,58 @@ public class UserService {
         Optional<User> userWithGivenEmail = userRepository.findUserByEmail(email);
 
         return userWithGivenEmail.isPresent();
+    }
+
+    public ResponseEntity resetPassword(String email) {
+        Optional<User> userWithGivenEmail = userRepository.findUserByEmail(email);
+
+        if (!userWithGivenEmail.isPresent()) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+
+        PasswordResetToken passwordResetToken = createPasswordResetTokenForUser(userWithGivenEmail.get());
+        String resetPasswordUrl = backendDeploymentUrl + "/user/change-password?token=" + passwordResetToken.getToken();
+        HttpStatus passwordResetEmailSentStatusCode = awsService.sendPasswordResetEmail(resetPasswordUrl, userWithGivenEmail.get().getEmail());
+
+        LOGGER.debug("Status code of sending password reset email: " + passwordResetEmailSentStatusCode.toString());
+
+        return new ResponseEntity<>(HttpStatus.OK);
+    }
+
+    public ResponseEntity changePassword(String token) {
+        ResponseEntity responseEntity = validatePasswordResetToken(token);
+
+        return responseEntity;
+    }
+
+    private ResponseEntity validatePasswordResetToken(String token) {
+        Optional<PasswordResetToken> passwordResetToken = passwordResetTokenRepository.findByToken(token);
+
+        if (!passwordResetToken.isPresent()) {
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
+
+        if (isTokenExpired(passwordResetToken.get())) {
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
+
+        return new ResponseEntity<>(HttpStatus.OK);
+    }
+
+    private boolean isTokenExpired(PasswordResetToken passwordResetToken) {
+        Calendar cal = Calendar.getInstance();
+
+        return passwordResetToken.getExpirationDate().before(cal.getTime());
+    }
+
+    private PasswordResetToken createPasswordResetTokenForUser(User user) {
+        String token = UUID.randomUUID().toString();
+
+        PasswordResetToken passwordResetToken = new PasswordResetToken();
+
+        passwordResetToken.setToken(token);
+        passwordResetToken.setUser(user);
+
+        return passwordResetTokenRepository.save(passwordResetToken);
     }
 }

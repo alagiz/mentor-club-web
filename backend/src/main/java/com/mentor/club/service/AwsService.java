@@ -41,6 +41,16 @@ public class AwsService {
         return invokeLambda(lambdaRequestConfirmEmail, confirmEmailLambdaArn);
     }
 
+    @LambdaFunction(functionName = "send-password-reset-email")
+    public HttpStatus sendPasswordResetEmail(String resetPasswordUrl, String email) {
+        LambdaRequestConfirmEmail lambdaRequestConfirmEmail = new LambdaRequestConfirmEmail();
+
+        lambdaRequestConfirmEmail.setEmail(email);
+        lambdaRequestConfirmEmail.setConfirmationUrl(resetPasswordUrl);
+
+        return invokeLambda(lambdaRequestConfirmEmail, confirmEmailLambdaArn);
+    }
+
     private HttpStatus invokeLambda(ILambdaRequest lambdaRequest, String lambdaArn) {
         try {
             String inputJSON = lambdaRequest.toJson(lambdaRequest);

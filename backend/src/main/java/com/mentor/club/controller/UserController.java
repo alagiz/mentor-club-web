@@ -58,6 +58,28 @@ public class UserController {
     }
 
     @PostMapping
+    @RequestMapping("/reset-password")
+    @ApiOperation(value = "Reset password request")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Authorized"),
+            @ApiResponse(code = 404, message = "User not found"),
+    })
+    public ResponseEntity resetPassword(@ApiParam(value = "Reset password") @RequestParam String email) {
+        return userService.resetPassword(email);
+    }
+
+    @GetMapping
+    @RequestMapping("/change-password")
+    @ApiOperation(value = "Change password request")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Authorized"),
+            @ApiResponse(code = 401, message = "Invalid password"),
+    })
+    public ResponseEntity changePassword(@ApiParam(value = "Reset password") @RequestParam("token") String token) {
+        return userService.changePassword(token);
+    }
+
+    @PostMapping
     @RequestMapping("/logout")
     @ApiOperation(value = "Logout user")
     @ApiResponses(value = {
