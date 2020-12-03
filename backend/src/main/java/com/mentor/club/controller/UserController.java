@@ -1,6 +1,8 @@
 package com.mentor.club.controller;
 
 import com.mentor.club.model.AuthenticationRequest;
+import com.mentor.club.model.ChangeForgottenPasswordRequest;
+import com.mentor.club.model.ChangePasswordRequest;
 import com.mentor.club.model.NewUser;
 import com.mentor.club.service.UserService;
 import io.swagger.annotations.*;
@@ -32,7 +34,8 @@ public class UserController {
             @ApiResponse(code = 401, message = "Unauthorized"),
             @ApiResponse(code = 404, message = "User not found"),
     })
-    public ResponseEntity authenticate(@ApiParam(value = "Credentials in JSON format 'username/password'") @RequestBody AuthenticationRequest authentication) {
+    public ResponseEntity authenticate(@ApiParam(value = "Credentials in JSON format 'username/password'")
+                                       @RequestBody AuthenticationRequest authentication) {
         return userService.authenticate(authentication);
     }
 
@@ -79,15 +82,29 @@ public class UserController {
         return userService.resetPassword(email);
     }
 
-    @GetMapping
+    @PostMapping
+    @RequestMapping("/change-forgotten-password")
+    @ApiOperation(value = "Change forgotten password request")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Authorized"),
+            @ApiResponse(code = 401, message = "Invalid password"),
+    })
+    public ResponseEntity changeForgottenPassword(@ApiParam(value = "Reset password")
+                                                  @RequestBody ChangeForgottenPasswordRequest changeForgottenPasswordRequest) {
+        return userService.changeForgottenPassword(changeForgottenPasswordRequest);
+    }
+
+    @PostMapping
     @RequestMapping("/change-password")
     @ApiOperation(value = "Change password request")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Authorized"),
             @ApiResponse(code = 401, message = "Invalid password"),
     })
-    public ResponseEntity changePassword(@ApiParam(value = "Reset password") @RequestParam("token") String token) {
-        return userService.changePassword(token);
+    public ResponseEntity changePassword(@ApiParam(value = "Reset password")
+                                         @RequestBody ChangePasswordRequest changePasswordRequest,
+                                         @RequestHeader(name = "Authorization") String authorization) {
+        return userService.changePassword(changePasswordRequest, authorization);
     }
 
     @PostMapping
@@ -97,7 +114,9 @@ public class UserController {
             @ApiResponse(code = 200, message = "Authorized"),
             @ApiResponse(code = 401, message = "Unauthorized"),
     })
-    public ResponseEntity logout(@ApiParam(value = "Logout user") @RequestHeader(name = "Authorization") String authorization, @RequestParam String username) {
+    public ResponseEntity logout(@ApiParam(value = "Logout user")
+                                 @RequestHeader(name = "Authorization") String authorization,
+                                 @RequestParam String username) {
         return userService.logout(authorization, username);
     }
 

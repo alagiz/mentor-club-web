@@ -1,5 +1,6 @@
 package com.mentor.club.model;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -16,16 +17,19 @@ public class PasswordResetToken {
 
     @Setter
     @Getter
+    @JsonProperty("token")
     private String token;
 
     @Setter
     @Getter
+    @JsonProperty("user")
     @OneToOne(targetEntity = User.class, fetch = FetchType.EAGER)
-    @JoinColumn(nullable = false, name = "id")
+    @JoinColumn(nullable = false, name = "userId", referencedColumnName = "id")
     private User user;
 
     @Setter
     @Getter
+    @JsonProperty("expirationDate")
     private Date expirationDate;
 
     @Override
