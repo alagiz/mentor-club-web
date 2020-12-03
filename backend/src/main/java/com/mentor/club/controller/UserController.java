@@ -1,9 +1,9 @@
 package com.mentor.club.controller;
 
-import com.mentor.club.model.AuthenticationRequest;
-import com.mentor.club.model.ChangeForgottenPasswordRequest;
-import com.mentor.club.model.ChangePasswordRequest;
-import com.mentor.club.model.NewUser;
+import com.mentor.club.model.authentication.AuthenticationRequest;
+import com.mentor.club.model.password.ChangeForgottenPasswordRequest;
+import com.mentor.club.model.password.ChangePasswordRequest;
+import com.mentor.club.model.user.NewUser;
 import com.mentor.club.service.UserService;
 import io.swagger.annotations.*;
 import lombok.Getter;

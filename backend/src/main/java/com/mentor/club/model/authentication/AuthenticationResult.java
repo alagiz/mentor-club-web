@@ -1,10 +1,11 @@
-package com.mentor.club.model;
+package com.mentor.club.model.authentication;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import com.mentor.club.model.ExtendableResult;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Getter;
 import lombok.Setter;

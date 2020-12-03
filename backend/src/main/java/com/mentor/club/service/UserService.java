@@ -3,6 +3,15 @@ package com.mentor.club.service;
 import com.google.gson.Gson;
 import com.mentor.club.exception.InternalException;
 import com.mentor.club.model.*;
+import com.mentor.club.model.authentication.AccessToken;
+import com.mentor.club.model.authentication.AuthenticationRequest;
+import com.mentor.club.model.authentication.AuthenticationResult;
+import com.mentor.club.model.password.ChangeForgottenPasswordRequest;
+import com.mentor.club.model.password.ChangePasswordRequest;
+import com.mentor.club.model.password.PasswordResetToken;
+import com.mentor.club.model.user.NewUser;
+import com.mentor.club.model.user.User;
+import com.mentor.club.model.user.UserStatus;
 import com.mentor.club.repository.IAccessTokenRepository;
 import com.mentor.club.repository.IPasswordResetTokenRepository;
 import com.mentor.club.repository.IUserRepository;
@@ -20,7 +29,7 @@ import org.springframework.stereotype.Service;
 import java.time.Instant;
 import java.util.*;
 
-import static com.mentor.club.model.PasswordResetToken.PASSWORD_RESET_TOKEN_LIFESPAN_IN_SECONDS;
+import static com.mentor.club.model.password.PasswordResetToken.PASSWORD_RESET_TOKEN_LIFESPAN_IN_SECONDS;
 import static com.mentor.club.model.error.HttpCallError.INVALID_INPUT;
 
 @Service

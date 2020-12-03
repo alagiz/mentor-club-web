@@ -1,4 +1,4 @@
-package com.mentor.club.model;
+package com.mentor.club.model.password;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;

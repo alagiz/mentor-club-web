@@ -1,6 +1,6 @@
 package com.mentor.club.repository;
 
-import com.mentor.club.model.PasswordResetToken;
+import com.mentor.club.model.password.PasswordResetToken;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
