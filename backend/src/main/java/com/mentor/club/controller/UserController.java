@@ -60,26 +60,15 @@ public class UserController {
         return userService.confirmEmail(userId);
     }
 
-    @GetMapping
-    @RequestMapping("/reset-password/{userId}")
-    @ApiOperation(value = "Reset password")
-    @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Authorized"),
-            @ApiResponse(code = 404, message = "User id not found"),
-    })
-    public ResponseEntity resetPassword(@ApiParam(value = "Confirm email") @PathVariable UUID userId) {
-        return userService.confirmEmail(userId);
-    }
-
     @PostMapping
-    @RequestMapping("/reset-password")
+    @RequestMapping("/reset-forgotten-password")
     @ApiOperation(value = "Reset password request")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Authorized"),
             @ApiResponse(code = 404, message = "User not found"),
     })
-    public ResponseEntity resetPassword(@ApiParam(value = "Reset password") @RequestParam String email) {
-        return userService.resetPassword(email);
+    public ResponseEntity generateResetForgottenPasswordEmail(@ApiParam(value = "Reset password") @RequestParam String email) {
+        return userService.generateResetForgottenPasswordEmail(email);
     }
 
     @PostMapping

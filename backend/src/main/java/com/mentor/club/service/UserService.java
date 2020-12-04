@@ -204,7 +204,7 @@ public class UserService {
         return userWithGivenEmail.isPresent();
     }
 
-    public ResponseEntity resetPassword(String email) {
+    public ResponseEntity generateResetForgottenPasswordEmail(String email) {
         Optional<User> userWithGivenEmail = userRepository.findUserByEmail(email);
 
         if (!userWithGivenEmail.isPresent()) {
