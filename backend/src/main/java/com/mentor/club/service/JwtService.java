@@ -5,7 +5,7 @@ import com.auth0.jwt.exceptions.SignatureVerificationException;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import com.mentor.club.model.ExtendableResult;
 import com.mentor.club.model.InternalResponse;
-import com.mentor.club.model.authentication.AccessToken;
+import com.mentor.club.model.authentication.JwtToken;
 import com.mentor.club.model.user.User;
 import com.mentor.club.repository.IAccessTokenRepository;
 import com.mentor.club.repository.IUserRepository;
@@ -23,6 +23,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import static com.mentor.club.utils.RsaUtils.USERNAME_CLAIM;
 
@@ -114,9 +115,9 @@ public class JwtService {
 
             if (optionalUser.isPresent()) {
                 UUID userId = optionalUser.get().getId();
-                List<AccessToken> userAccessTokens = tokenRepository.findByUserId(userId);
+                List<JwtToken> userAccessTokens = tokenRepository.findByUserId(userId);
 
-                userAccessTokens.stream().forEach(accessToken -> tokenRepository.delete(accessToken));
+                userAccessTokens.forEach(accessToken -> tokenRepository.delete(accessToken));
 
                 return new ResponseEntity<>(HttpStatus.OK);
             } else {
@@ -138,9 +139,13 @@ public class JwtService {
             Optional<User> optionalUser = userRepository.findUserByUsername(username);
 
             if (optionalUser.isPresent()) {
-                List<AccessToken> userAccessTokens = tokenRepository.findByUserId(optionalUser.get().getId());
+                List<JwtToken> userAccessTokens = tokenRepository.findByUserId(optionalUser.get().getId());
 
-                boolean isTokenPresent = userAccessTokens.contains(decodedJWT.getToken());
+                boolean isTokenPresent = userAccessTokens
+                        .stream()
+                        .map(JwtToken::getToken)
+                        .collect(Collectors.toList())
+                        .contains(decodedJWT.getToken());
                 boolean isTokenExpired = decodedJWT.getExpiresAt().after(Date.from(Instant.now()));
 
                 if (isTokenPresent && isTokenExpired) {
@@ -164,11 +169,9 @@ public class JwtService {
 
     private void removeTokenIfExpired(DecodedJWT decodedJWT) {
         try {
-            Optional<AccessToken> optionalToken = tokenRepository.findByToken(decodedJWT.getToken());
+            Optional<JwtToken> optionalToken = tokenRepository.findByToken(decodedJWT.getToken());
 
-            if (optionalToken.isPresent()) {
-                tokenRepository.delete(optionalToken.get());
-            }
+            optionalToken.ifPresent(jwtToken -> tokenRepository.delete(jwtToken));
         } catch (Exception exception) {
             String username = decodedJWT.getClaims().get(USERNAME_CLAIM).asString();
 

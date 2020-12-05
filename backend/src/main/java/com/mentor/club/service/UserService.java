@@ -2,11 +2,11 @@ package com.mentor.club.service;
 
 import com.google.gson.Gson;
 import com.mentor.club.exception.InternalException;
-import com.mentor.club.model.*;
+import com.mentor.club.model.InternalResponse;
+import com.mentor.club.model.PublicKeyResponse;
 import com.mentor.club.model.authentication.*;
 import com.mentor.club.model.password.ChangeForgottenPasswordRequest;
 import com.mentor.club.model.password.ChangePasswordRequest;
-import com.mentor.club.model.password.PasswordResetToken;
 import com.mentor.club.model.user.NewUser;
 import com.mentor.club.model.user.User;
 import com.mentor.club.model.user.UserStatus;
@@ -21,6 +21,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -31,7 +32,6 @@ import javax.servlet.http.HttpServletResponse;
 import java.time.Instant;
 import java.util.*;
 
-import static com.mentor.club.model.password.PasswordResetToken.PASSWORD_RESET_TOKEN_LIFESPAN_IN_SECONDS;
 import static com.mentor.club.model.error.HttpCallError.INVALID_INPUT;
 
 @Service
@@ -151,14 +151,14 @@ public class UserService {
 
                 result.setUsername(username);
                 result.setThumbnailPhoto(user.getThumbnailBase64());
-                result.setToken(createAccessToken(user));
+                result.setToken(createJwtToken(user, JwtTokenLifetime.ACCESS_TOKEN_LIFESPAN_IN_SECONDS.getLifetime(), accessTokenRepository));
                 result.setDisplayName(user.getName());
                 result.setThumbnailPhoto(user.getThumbnailBase64());
 
                 response.setJson(result);
                 response.setStatus(HttpStatus.OK);
 
-                String refreshToken = createRefreshToken(user);
+                String refreshToken = createJwtToken(user, JwtTokenLifetime.REFRESH_TOKEN_LIFESPAN_IN_SECONDS.getLifetime(), refreshTokenRepository);
                 Cookie cookieWithRefreshToken = createCookieWithRefreshToken(refreshToken);
 
                 httpServletResponse.addCookie(cookieWithRefreshToken);
@@ -178,19 +178,19 @@ public class UserService {
     }
 
     public ResponseEntity getRefreshAndAccessToken(String refreshTokenCookie, HttpServletResponse httpServletResponse) {
-        Optional<RefreshToken> optionalRefreshToken = refreshTokenRepository.findByToken(refreshTokenCookie);
+        Optional<JwtToken> optionalRefreshToken = refreshTokenRepository.findByToken(refreshTokenCookie);
 
         if (!optionalRefreshToken.isPresent()) {
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
 
-        RefreshToken refreshToken = optionalRefreshToken.get();
+        JwtToken refreshToken = optionalRefreshToken.get();
 
-        if (isTokenExpired(refreshToken)) {
+        if (refreshToken.isExpired()) {
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
 
-        Optional<User> optionalUser = userRepository.findById(refreshToken.getUserId());
+        Optional<User> optionalUser = userRepository.findById(refreshToken.getUser().getId());
 
         if (!optionalUser.isPresent()) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
@@ -203,16 +203,16 @@ public class UserService {
         }
 
         User user = optionalUser.get();
-        String newRefreshToken = createRefreshToken(user);
+        String newRefreshToken = createJwtToken(user, JwtTokenLifetime.REFRESH_TOKEN_LIFESPAN_IN_SECONDS.getLifetime(), refreshTokenRepository);
 
         Cookie cookieWithRefreshToken = createCookieWithRefreshToken(newRefreshToken);
 
         httpServletResponse.addCookie(cookieWithRefreshToken);
         addSameSiteCookieAttribute(httpServletResponse);
 
-        RefreshTokenResult refreshTokenResult = new RefreshTokenResult();
+        tokenResult refreshTokenResult = new tokenResult();
 
-        refreshTokenResult.setToken(createAccessToken(user));
+        refreshTokenResult.setToken(createJwtToken(user, JwtTokenLifetime.ACCESS_TOKEN_LIFESPAN_IN_SECONDS.getLifetime(), accessTokenRepository));
 
         return new ResponseEntity<>(refreshTokenResult, HttpStatus.OK);
     }
@@ -247,32 +247,19 @@ public class UserService {
         return new ResponseEntity<>(getPublicKeyResponse(), HttpStatus.OK);
     }
 
-    private String createAccessToken(User user) {
+    private String createJwtToken(User user, Long tokenLifetime, JpaRepository<JwtToken, Long> repository) {
         List<String> userGroups = Arrays.asList("user"); // change in the future
-        String jwtToken = RsaUtils.generateToken(user.getUsername(), userGroups);
+        String jwtTokenString = RsaUtils.generateToken(user.getUsername(), userGroups);
 
-        AccessToken accessToken = new AccessToken();
+        JwtToken jwtToken = new JwtToken();
 
-        accessToken.setToken(jwtToken);
-        accessToken.setUserId(user.getId());
+        jwtToken.setToken(jwtTokenString);
+        jwtToken.setUser(user);
+        jwtToken.setExpirationDate(Date.from(Instant.now().plusSeconds(tokenLifetime)));
 
-        accessTokenRepository.save(accessToken);
+        repository.save(jwtToken);
 
-        return accessToken.getToken();
-    }
-
-    private String createRefreshToken(User user) {
-        List<String> userGroups = Arrays.asList("user"); // change in the future
-        String jwtToken = RsaUtils.generateToken(user.getUsername(), userGroups);
-
-        RefreshToken refreshToken = new RefreshToken();
-
-        refreshToken.setToken(jwtToken);
-        refreshToken.setUserId(user.getId());
-
-        refreshTokenRepository.save(refreshToken);
-
-        return refreshToken.getToken();
+        return jwtToken.getToken();
     }
 
     public PublicKeyResponse getPublicKeyResponse() {
@@ -310,7 +297,7 @@ public class UserService {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
 
-        PasswordResetToken passwordResetToken = createPasswordResetTokenForUser(userWithGivenEmail.get());
+        JwtToken passwordResetToken = createPasswordResetTokenForUser(userWithGivenEmail.get());
         String resetPasswordUrl = backendDeploymentUrl + "/user/change-password?token=" + passwordResetToken.getToken();
         HttpStatus passwordResetEmailSentStatusCode = awsService.sendPasswordResetEmail(resetPasswordUrl, userWithGivenEmail.get());
 
@@ -370,32 +357,28 @@ public class UserService {
     }
 
     private ResponseEntity validatePasswordResetToken(String token) {
-        Optional<PasswordResetToken> passwordResetToken = passwordResetTokenRepository.findByToken(token);
+        Optional<JwtToken> passwordResetToken = passwordResetTokenRepository.findByToken(token);
 
         if (!passwordResetToken.isPresent()) {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
 
-        if (isTokenExpired(passwordResetToken.get())) {
+        if (passwordResetToken.get().isExpired()) {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
 
         return new ResponseEntity<>(HttpStatus.OK);
     }
 
-    private boolean isTokenExpired(ExpirableToken expirableToken) {
-        return expirableToken.isExpired(expirableToken.getExpirationDate());
-    }
-
-    private PasswordResetToken createPasswordResetTokenForUser(User user) {
+    private JwtToken createPasswordResetTokenForUser(User user) {
         String token = UUID.randomUUID().toString();
 
-        PasswordResetToken passwordResetToken = new PasswordResetToken();
+        JwtToken jwtToken = new JwtToken();
 
-        passwordResetToken.setToken(token);
-        passwordResetToken.setUser(user);
-        passwordResetToken.setExpirationDate(Date.from(Instant.now().plusSeconds(PASSWORD_RESET_TOKEN_LIFESPAN_IN_SECONDS)));
+        jwtToken.setToken(token);
+        jwtToken.setUser(user);
+        jwtToken.setExpirationDate(Date.from(Instant.now().plusSeconds(JwtTokenLifetime.PASSWORD_RESET_TOKEN_LIFESPAN_IN_SECONDS.getLifetime())));
 
-        return passwordResetTokenRepository.save(passwordResetToken);
+        return passwordResetTokenRepository.save(jwtToken);
     }
 }

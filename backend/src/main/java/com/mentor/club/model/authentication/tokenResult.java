@@ -7,7 +7,7 @@ import lombok.Setter;
 
 @Setter
 @Getter
-public class RefreshTokenResult {
+public class tokenResult {
     @JsonProperty
     @ApiModelProperty(notes = "The JWT generated", required = true)
     String token;
