@@ -210,11 +210,11 @@ public class UserService {
         httpServletResponse.addCookie(cookieWithRefreshToken);
         addSameSiteCookieAttribute(httpServletResponse);
 
-        tokenResult refreshTokenResult = new tokenResult();
+        WrappedJwtToken refreshWrappedJwtToken = new WrappedJwtToken();
 
-        refreshTokenResult.setToken(createJwtToken(user, JwtTokenLifetime.ACCESS_TOKEN_LIFESPAN_IN_SECONDS.getLifetime(), accessTokenRepository));
+        refreshWrappedJwtToken.setToken(createJwtToken(user, JwtTokenLifetime.ACCESS_TOKEN_LIFESPAN_IN_SECONDS.getLifetime(), accessTokenRepository));
 
-        return new ResponseEntity<>(refreshTokenResult, HttpStatus.OK);
+        return new ResponseEntity<>(refreshWrappedJwtToken, HttpStatus.OK);
     }
 
     private Cookie createCookieWithRefreshToken(String refreshToken) {
