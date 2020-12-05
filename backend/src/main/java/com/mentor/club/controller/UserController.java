@@ -11,6 +11,7 @@ import lombok.Setter;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpServletResponse;
 import java.util.UUID;
 
 @CrossOrigin()
@@ -35,8 +36,9 @@ public class UserController {
             @ApiResponse(code = 404, message = "User not found"),
     })
     public ResponseEntity authenticate(@ApiParam(value = "Credentials in JSON format 'username/password'")
-                                       @RequestBody AuthenticationRequest authentication) {
-        return userService.authenticate(authentication);
+                                       @RequestBody AuthenticationRequest authentication,
+                                       HttpServletResponse response) {
+        return userService.authenticate(authentication, response);
     }
 
     @PostMapping
@@ -90,10 +92,20 @@ public class UserController {
             @ApiResponse(code = 200, message = "Authorized"),
             @ApiResponse(code = 401, message = "Invalid password"),
     })
-    public ResponseEntity changePassword(@ApiParam(value = "Reset password")
-                                         @RequestBody ChangePasswordRequest changePasswordRequest,
+    public ResponseEntity changePassword(@RequestBody ChangePasswordRequest changePasswordRequest,
                                          @RequestHeader(name = "Authorization") String authorization) {
         return userService.changePassword(changePasswordRequest, authorization);
+    }
+
+    @PostMapping
+    @RequestMapping("/refresh-token")
+    @ApiOperation(value = "Get new access and refresh tokens")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Authorized"),
+            @ApiResponse(code = 401, message = "Invalid password"),
+    })
+    public ResponseEntity getRefreshAndAccessToken(@CookieValue("refreshToken") String refreshTokenCookie, HttpServletResponse response) {
+        return userService.getRefreshAndAccessToken(refreshTokenCookie, response);
     }
 
     @PostMapping

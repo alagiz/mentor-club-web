@@ -3,9 +3,7 @@ package com.mentor.club.service;
 import com.google.gson.Gson;
 import com.mentor.club.exception.InternalException;
 import com.mentor.club.model.*;
-import com.mentor.club.model.authentication.AccessToken;
-import com.mentor.club.model.authentication.AuthenticationRequest;
-import com.mentor.club.model.authentication.AuthenticationResult;
+import com.mentor.club.model.authentication.*;
 import com.mentor.club.model.password.ChangeForgottenPasswordRequest;
 import com.mentor.club.model.password.ChangePasswordRequest;
 import com.mentor.club.model.password.PasswordResetToken;
@@ -14,6 +12,7 @@ import com.mentor.club.model.user.User;
 import com.mentor.club.model.user.UserStatus;
 import com.mentor.club.repository.IAccessTokenRepository;
 import com.mentor.club.repository.IPasswordResetTokenRepository;
+import com.mentor.club.repository.IRefreshTokenRepository;
 import com.mentor.club.repository.IUserRepository;
 import com.mentor.club.utils.RsaUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
@@ -22,10 +21,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServletResponse;
 import java.time.Instant;
 import java.util.*;
 
@@ -35,8 +37,11 @@ import static com.mentor.club.model.error.HttpCallError.INVALID_INPUT;
 @Service
 public class UserService {
     private static final Logger LOGGER = LoggerFactory.getLogger(UserService.class);
+    public static final Integer REFRESH_TOKEN_LIFESPAN_IN_SECONDS = 3600 * 24 * 30; // 30 days
+
     private IUserRepository userRepository;
-    private IAccessTokenRepository tokenRepository;
+    private IAccessTokenRepository accessTokenRepository;
+    private IRefreshTokenRepository refreshTokenRepository;
     private AwsService awsService;
     private JwtService jwtService;
     private IPasswordResetTokenRepository passwordResetTokenRepository;
@@ -45,16 +50,22 @@ public class UserService {
     private String backendDeploymentUrl;
 
     @Autowired
-    public UserService(IUserRepository userRepository, IAccessTokenRepository tokenRepository, AwsService awsService, JwtService jwtService, IPasswordResetTokenRepository passwordResetTokenRepository) {
+    public UserService(IUserRepository userRepository,
+                       IAccessTokenRepository accessTokenRepository,
+                       IRefreshTokenRepository refreshTokenRepository,
+                       AwsService awsService,
+                       JwtService jwtService,
+                       IPasswordResetTokenRepository passwordResetTokenRepository) {
         this.userRepository = userRepository;
-        this.tokenRepository = tokenRepository;
+        this.accessTokenRepository = accessTokenRepository;
+        this.refreshTokenRepository = refreshTokenRepository;
         this.awsService = awsService;
         this.jwtService = jwtService;
         this.passwordResetTokenRepository = passwordResetTokenRepository;
     }
 
-    public ResponseEntity authenticate(AuthenticationRequest authentication) {
-        final InternalResponse authResponse = authenticateWithCredentials(authentication);
+    public ResponseEntity authenticate(AuthenticationRequest authentication, HttpServletResponse response) {
+        final InternalResponse authResponse = authenticateWithCredentials(authentication, response);
 
         return new ResponseEntity<>(authResponse.getJson(), authResponse.getStatus());
     }
@@ -114,7 +125,7 @@ public class UserService {
         }
     }
 
-    private InternalResponse authenticateWithCredentials(AuthenticationRequest authentication) {
+    private InternalResponse authenticateWithCredentials(AuthenticationRequest authentication, HttpServletResponse httpServletResponse) {
         InternalResponse response = new InternalResponse();
         AuthenticationResult result = new AuthenticationResult();
 
@@ -122,9 +133,9 @@ public class UserService {
         String password = authentication.getPassword();
 
         try {
-            Optional<User> user = userRepository.findUserByUsername(username);
+            Optional<User> optionalUser = userRepository.findUserByUsername(username);
 
-            if (!user.isPresent()) {
+            if (!optionalUser.isPresent()) {
                 LOGGER.error("User with username " + username + " not found!");
 
                 response.setStatus(HttpStatus.NOT_FOUND);
@@ -133,17 +144,25 @@ public class UserService {
                 return response;
             }
 
-            if (checkPassword(password, user.get().getHashedPassword())) {
+            if (checkPassword(password, optionalUser.get().getHashedPassword())) {
                 LOGGER.debug("Correct password for user with username " + username + "!");
 
+                User user = optionalUser.get();
+
                 result.setUsername(username);
-                result.setThumbnailPhoto(user.get().getThumbnailBase64());
-                result.setToken(createToken(user));
-                result.setDisplayName(user.get().getName());
-                result.setThumbnailPhoto(user.get().getThumbnailBase64());
+                result.setThumbnailPhoto(user.getThumbnailBase64());
+                result.setToken(createAccessToken(user));
+                result.setDisplayName(user.getName());
+                result.setThumbnailPhoto(user.getThumbnailBase64());
 
                 response.setJson(result);
                 response.setStatus(HttpStatus.OK);
+
+                String refreshToken = createRefreshToken(user);
+                Cookie cookieWithRefreshToken = createCookieWithRefreshToken(refreshToken);
+
+                httpServletResponse.addCookie(cookieWithRefreshToken);
+                addSameSiteCookieAttribute(httpServletResponse);
             } else {
                 LOGGER.error("Incorrect password for user with username " + username + "!");
 
@@ -158,22 +177,102 @@ public class UserService {
         }
     }
 
+    public ResponseEntity getRefreshAndAccessToken(String refreshTokenCookie, HttpServletResponse httpServletResponse) {
+        Optional<RefreshToken> optionalRefreshToken = refreshTokenRepository.findByToken(refreshTokenCookie);
+
+        if (!optionalRefreshToken.isPresent()) {
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+        }
+
+        RefreshToken refreshToken = optionalRefreshToken.get();
+
+        if (isTokenExpired(refreshToken)) {
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+        }
+
+        Optional<User> optionalUser = userRepository.findById(refreshToken.getUserId());
+
+        if (!optionalUser.isPresent()) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+
+        try {
+            refreshTokenRepository.delete(refreshToken);
+        } catch (Exception exception) {
+            LOGGER.error("Could not delete refresh token " + refreshToken.getToken() + "!");
+        }
+
+        User user = optionalUser.get();
+        String newRefreshToken = createRefreshToken(user);
+
+        Cookie cookieWithRefreshToken = createCookieWithRefreshToken(newRefreshToken);
+
+        httpServletResponse.addCookie(cookieWithRefreshToken);
+        addSameSiteCookieAttribute(httpServletResponse);
+
+        RefreshTokenResult refreshTokenResult = new RefreshTokenResult();
+
+        refreshTokenResult.setToken(createAccessToken(user));
+
+        return new ResponseEntity<>(refreshTokenResult, HttpStatus.OK);
+    }
+
+    private Cookie createCookieWithRefreshToken(String refreshToken) {
+        Cookie cookie = new Cookie("refreshToken", refreshToken);
+
+        cookie.setHttpOnly(true);
+        cookie.setPath("/refresh-token");
+        cookie.setMaxAge(REFRESH_TOKEN_LIFESPAN_IN_SECONDS); // 30 days
+        cookie.setSecure(true); // TODO check if needed with httpd
+
+        return cookie;
+    }
+
+    private void addSameSiteCookieAttribute(HttpServletResponse response) {
+        Collection<String> headers = response.getHeaders(HttpHeaders.SET_COOKIE);
+        boolean firstHeader = true;
+
+        for (String header : headers) {
+            if (firstHeader) {
+                response.setHeader(HttpHeaders.SET_COOKIE, String.format("%s; %s", header, "SameSite=Strict"));
+
+                firstHeader = false;
+                continue;
+            }
+            response.addHeader(HttpHeaders.SET_COOKIE, String.format("%s; %s", header, "SameSite=Strict"));
+        }
+    }
+
     public ResponseEntity getPublicKey() {
         return new ResponseEntity<>(getPublicKeyResponse(), HttpStatus.OK);
     }
 
-    private String createToken(Optional<User> user) {
+    private String createAccessToken(User user) {
         List<String> userGroups = Arrays.asList("user"); // change in the future
-        String jwtToken = RsaUtils.generateToken(user.get().getUsername(), userGroups);
+        String jwtToken = RsaUtils.generateToken(user.getUsername(), userGroups);
 
         AccessToken accessToken = new AccessToken();
 
         accessToken.setToken(jwtToken);
-        accessToken.setUserId(user.get().getId());
+        accessToken.setUserId(user.getId());
 
-        tokenRepository.save(accessToken);
+        accessTokenRepository.save(accessToken);
 
         return accessToken.getToken();
+    }
+
+    private String createRefreshToken(User user) {
+        List<String> userGroups = Arrays.asList("user"); // change in the future
+        String jwtToken = RsaUtils.generateToken(user.getUsername(), userGroups);
+
+        RefreshToken refreshToken = new RefreshToken();
+
+        refreshToken.setToken(jwtToken);
+        refreshToken.setUserId(user.getId());
+
+        refreshTokenRepository.save(refreshToken);
+
+        return refreshToken.getToken();
     }
 
     public PublicKeyResponse getPublicKeyResponse() {
@@ -284,10 +383,8 @@ public class UserService {
         return new ResponseEntity<>(HttpStatus.OK);
     }
 
-    private boolean isTokenExpired(PasswordResetToken passwordResetToken) {
-        Calendar cal = Calendar.getInstance();
-
-        return passwordResetToken.getExpirationDate().before(cal.getTime());
+    private boolean isTokenExpired(ExpirableToken expirableToken) {
+        return expirableToken.isExpired(expirableToken.getExpirationDate());
     }
 
     private PasswordResetToken createPasswordResetTokenForUser(User user) {

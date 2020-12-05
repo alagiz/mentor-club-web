@@ -11,7 +11,7 @@ import java.util.UUID;
 @Entity
 @Getter
 @Setter
-public class AccessToken extends ExpirableToken {
+public class RefreshToken extends ExpirableToken {
     @Id
     @Column(name = "id")
     @Setter(AccessLevel.NONE)
