@@ -174,7 +174,8 @@ public class UserService {
             return response;
         } catch (Exception exception) {
             LOGGER.error(ExceptionUtils.getStackTrace(exception));
-            throw new InternalException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, INVALID_INPUT);
+
+            throw new InternalException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, INVALID_INPUT, exception.getMessage());
         }
     }
 
@@ -267,7 +268,7 @@ public class UserService {
         } catch (Exception exception) {
             LOGGER.error("Could not create token of type " + jwtTokenType.name() + " for user " + user.getUsername() + "!");
 
-            throw new InternalException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, FAILED_TO_SAVE_TO_DB);
+            throw new InternalException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, FAILED_TO_SAVE_TO_DB, exception.getMessage());
         }
     }
 
