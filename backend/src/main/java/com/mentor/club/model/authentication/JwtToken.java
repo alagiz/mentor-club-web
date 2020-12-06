@@ -10,8 +10,7 @@ import javax.persistence.*;
 import java.util.Calendar;
 import java.util.Date;
 
-@Entity
-@Inheritance
+@MappedSuperclass
 @Getter
 @Setter
 public class JwtToken {

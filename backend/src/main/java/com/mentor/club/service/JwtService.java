@@ -212,7 +212,7 @@ public class JwtService {
         deleteJwtTokensForUser(user, refreshTokenRepository);
     }
 
-    JwtToken getAccessTokenFromAuthorizationString(String authorization) {
+    AccessToken getAccessTokenFromAuthorizationString(String authorization) {
         String token = authorization.substring(authorization.lastIndexOf(" ") + 1);
 
         try {
