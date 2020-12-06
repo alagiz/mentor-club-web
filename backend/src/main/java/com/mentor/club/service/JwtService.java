@@ -6,13 +6,13 @@ import com.auth0.jwt.interfaces.DecodedJWT;
 import com.mentor.club.exception.InternalException;
 import com.mentor.club.model.ExtendableResult;
 import com.mentor.club.model.InternalResponse;
+import com.mentor.club.model.authentication.AccessToken;
 import com.mentor.club.model.authentication.JwtToken;
 import com.mentor.club.model.user.User;
 import com.mentor.club.repository.IAccessTokenRepository;
 import com.mentor.club.repository.IJwtTokenRepository;
 import com.mentor.club.repository.IRefreshTokenRepository;
 import com.mentor.club.repository.IUserRepository;
-import com.mentor.club.utils.RsaUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,7 +28,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static com.mentor.club.model.error.HttpCallError.FAILED_TO_FIND_TOKEN;
-import static com.mentor.club.utils.RsaUtils.USERNAME_CLAIM;
+import static com.mentor.club.service.RsaService.USERNAME_CLAIM;
 
 @Service
 public class JwtService {
@@ -47,6 +47,7 @@ public class JwtService {
     private IUserRepository userRepository;
     private IAccessTokenRepository accessTokenRepository;
     private IRefreshTokenRepository refreshTokenRepository;
+    private RsaService rsaService;
 
     @Value("${backend.deployment.url}")
     private String backendDeploymentUrl;
@@ -54,10 +55,12 @@ public class JwtService {
     @Autowired
     public JwtService(IUserRepository userRepository,
                       IAccessTokenRepository accessTokenRepository,
-                      IRefreshTokenRepository refreshTokenRepository) {
+                      IRefreshTokenRepository refreshTokenRepository,
+                      RsaService rsaService) {
         this.userRepository = userRepository;
         this.accessTokenRepository = accessTokenRepository;
         this.refreshTokenRepository = refreshTokenRepository;
+        this.rsaService = rsaService;
     }
 
     public ResponseEntity validateJWT(String authorization) {
@@ -66,7 +69,7 @@ public class JwtService {
         String token = authorization.substring(authorization.lastIndexOf(" ") + 1);
 
         try {
-            decodedJWT = RsaUtils.decodeToken(token);
+            decodedJWT = rsaService.decodeToken(token);
         } catch (JWTDecodeException exception) {
             errorMessage = ERROR_MESSAGE_INVALID_TOKEN;
         } catch (SignatureVerificationException ex) {
@@ -144,7 +147,7 @@ public class JwtService {
             Optional<User> optionalUser = userRepository.findUserByUsername(username);
 
             if (optionalUser.isPresent()) {
-                List<JwtToken> userAccessTokens = accessTokenRepository.findByUserId(optionalUser.get().getId());
+                List<AccessToken> userAccessTokens = accessTokenRepository.findByUserId(optionalUser.get().getId());
 
                 boolean isTokenPresent = userAccessTokens
                         .stream()
@@ -154,7 +157,7 @@ public class JwtService {
                 boolean isTokenExpired = decodedJWT.getExpiresAt().after(Date.from(Instant.now()));
 
                 if (isTokenPresent && isTokenExpired) {
-                    removeTokenIfExpired(decodedJWT);
+                    removeAccessTokenIfExpired(decodedJWT);
 
                     return false;
                 }
@@ -172,9 +175,9 @@ public class JwtService {
         }
     }
 
-    private void removeTokenIfExpired(DecodedJWT decodedJWT) {
+    private void removeAccessTokenIfExpired(DecodedJWT decodedJWT) {
         try {
-            Optional<JwtToken> optionalToken = accessTokenRepository.findByToken(decodedJWT.getToken());
+            Optional<AccessToken> optionalToken = accessTokenRepository.findByToken(decodedJWT.getToken());
 
             optionalToken.ifPresent(jwtToken -> accessTokenRepository.delete(jwtToken));
         } catch (Exception exception) {
@@ -213,7 +216,7 @@ public class JwtService {
         String token = authorization.substring(authorization.lastIndexOf(" ") + 1);
 
         try {
-            Optional<JwtToken> jwtToken = accessTokenRepository.findByToken(token);
+            Optional<AccessToken> jwtToken = accessTokenRepository.findByToken(token);
 
             if (!jwtToken.isPresent()) {
                 throw new InternalException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, FAILED_TO_FIND_TOKEN);

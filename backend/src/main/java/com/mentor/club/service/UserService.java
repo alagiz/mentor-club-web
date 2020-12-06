@@ -10,18 +10,13 @@ import com.mentor.club.model.password.ChangePasswordRequest;
 import com.mentor.club.model.user.NewUser;
 import com.mentor.club.model.user.User;
 import com.mentor.club.model.user.UserStatus;
-import com.mentor.club.repository.IAccessTokenRepository;
-import com.mentor.club.repository.IPasswordResetTokenRepository;
-import com.mentor.club.repository.IRefreshTokenRepository;
-import com.mentor.club.repository.IUserRepository;
-import com.mentor.club.utils.RsaUtils;
+import com.mentor.club.repository.*;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.mindrot.jbcrypt.BCrypt;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -45,6 +40,7 @@ public class UserService {
     private AwsService awsService;
     private JwtService jwtService;
     private IPasswordResetTokenRepository passwordResetTokenRepository;
+    private RsaService rsaService;
 
     @Value("${backend.deployment.url}")
     private String backendDeploymentUrl;
@@ -55,13 +51,16 @@ public class UserService {
                        IRefreshTokenRepository refreshTokenRepository,
                        AwsService awsService,
                        JwtService jwtService,
-                       IPasswordResetTokenRepository passwordResetTokenRepository) {
+                       IPasswordResetTokenRepository passwordResetTokenRepository,
+                       RsaService rsaService) {
         this.userRepository = userRepository;
         this.accessTokenRepository = accessTokenRepository;
         this.refreshTokenRepository = refreshTokenRepository;
         this.awsService = awsService;
         this.jwtService = jwtService;
         this.passwordResetTokenRepository = passwordResetTokenRepository;
+        this.passwordResetTokenRepository = passwordResetTokenRepository;
+        this.rsaService = rsaService;
     }
 
     public ResponseEntity authenticate(AuthenticationRequest authentication, HttpServletResponse response) {
@@ -153,14 +152,14 @@ public class UserService {
 
                 result.setUsername(username);
                 result.setThumbnailPhoto(user.getThumbnailBase64());
-                result.setToken(createJwtToken(user, JwtTokenLifetime.ACCESS_TOKEN_LIFESPAN_IN_SECONDS.getLifetime(), accessTokenRepository));
+                result.setToken(createJwtToken(user, JwtTokenLifetime.ACCESS_TOKEN_LIFESPAN_IN_SECONDS.getLifetime(), accessTokenRepository, JwtTokenType.ACCESS_TOKEN));
                 result.setDisplayName(user.getName());
                 result.setThumbnailPhoto(user.getThumbnailBase64());
 
                 response.setJson(result);
                 response.setStatus(HttpStatus.OK);
 
-                String refreshToken = createJwtToken(user, JwtTokenLifetime.REFRESH_TOKEN_LIFESPAN_IN_SECONDS.getLifetime(), refreshTokenRepository);
+                String refreshToken = createJwtToken(user, JwtTokenLifetime.REFRESH_TOKEN_LIFESPAN_IN_SECONDS.getLifetime(), refreshTokenRepository, JwtTokenType.REFRESH_TOKEN);
                 Cookie cookieWithRefreshToken = createCookieWithRefreshToken(refreshToken);
 
                 httpServletResponse.addCookie(cookieWithRefreshToken);
@@ -179,8 +178,8 @@ public class UserService {
         }
     }
 
-    public ResponseEntity getRefreshAndAccessToken(String refreshTokenCookie,  String authorization, HttpServletResponse httpServletResponse) {
-        Optional<JwtToken> optionalRefreshToken = refreshTokenRepository.findByToken(refreshTokenCookie);
+    public ResponseEntity getRefreshAndAccessToken(String refreshTokenCookie, String authorization, HttpServletResponse httpServletResponse) {
+        Optional<RefreshToken> optionalRefreshToken = refreshTokenRepository.findByToken(refreshTokenCookie);
 
         if (!optionalRefreshToken.isPresent()) {
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
@@ -205,7 +204,7 @@ public class UserService {
         jwtService.deleteJwtTokenForUser(user, accessTokenRepository, accessToken);
         jwtService.deleteJwtTokenForUser(user, refreshTokenRepository, refreshToken);
 
-        String newRefreshToken = createJwtToken(user, JwtTokenLifetime.REFRESH_TOKEN_LIFESPAN_IN_SECONDS.getLifetime(), refreshTokenRepository);
+        String newRefreshToken = createJwtToken(user, JwtTokenLifetime.REFRESH_TOKEN_LIFESPAN_IN_SECONDS.getLifetime(), refreshTokenRepository, JwtTokenType.REFRESH_TOKEN);
 
         Cookie cookieWithRefreshToken = createCookieWithRefreshToken(newRefreshToken);
 
@@ -214,7 +213,7 @@ public class UserService {
 
         WrappedJwtToken refreshWrappedJwtToken = new WrappedJwtToken();
 
-        refreshWrappedJwtToken.setToken(createJwtToken(user, JwtTokenLifetime.ACCESS_TOKEN_LIFESPAN_IN_SECONDS.getLifetime(), accessTokenRepository));
+        refreshWrappedJwtToken.setToken(createJwtToken(user, JwtTokenLifetime.ACCESS_TOKEN_LIFESPAN_IN_SECONDS.getLifetime(), accessTokenRepository, JwtTokenType.ACCESS_TOKEN));
 
         return new ResponseEntity<>(refreshWrappedJwtToken, HttpStatus.OK);
     }
@@ -251,11 +250,11 @@ public class UserService {
         return new ResponseEntity<>(getPublicKeyResponse(), HttpStatus.OK);
     }
 
-    private String createJwtToken(User user, Long tokenLifetime, JpaRepository<JwtToken, Long> repository) {
+    private String createJwtToken(User user, Long tokenLifetime, IJwtTokenRepository repository, JwtTokenType jwtTokenType) {
         List<String> userGroups = Arrays.asList("user"); // change in the future
-        String jwtTokenString = RsaUtils.generateToken(user.getUsername(), userGroups, tokenLifetime);
+        String jwtTokenString = rsaService.generateToken(user.getUsername(), userGroups, tokenLifetime);
 
-        JwtToken jwtToken = new JwtToken();
+        JwtToken jwtToken = new JwtToken(jwtTokenType);
 
         jwtToken.setToken(jwtTokenString);
         jwtToken.setUser(user);
@@ -266,7 +265,7 @@ public class UserService {
 
             return jwtToken.getToken();
         } catch (Exception exception) {
-            LOGGER.error("Could not create token for user " + user.getName() + "!");
+            LOGGER.error("Could not create token of type " + jwtTokenType.name() + " for user " + user.getUsername() + "!");
 
             throw new InternalException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, FAILED_TO_SAVE_TO_DB);
         }
@@ -367,7 +366,7 @@ public class UserService {
     }
 
     private ResponseEntity validatePasswordResetToken(String token) {
-        Optional<JwtToken> passwordResetToken = passwordResetTokenRepository.findByToken(token);
+        Optional<PasswordResetToken> passwordResetToken = passwordResetTokenRepository.findByToken(token);
 
         if (!passwordResetToken.isPresent()) {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
@@ -380,15 +379,15 @@ public class UserService {
         return new ResponseEntity<>(HttpStatus.OK);
     }
 
-    private JwtToken createPasswordResetTokenForUser(User user) {
+    private PasswordResetToken createPasswordResetTokenForUser(User user) {
         String token = UUID.randomUUID().toString();
 
-        JwtToken jwtToken = new JwtToken();
+        PasswordResetToken passwordResetToken = new PasswordResetToken(JwtTokenType.PASSWORD_RESET_TOKEN);
 
-        jwtToken.setToken(token);
-        jwtToken.setUser(user);
-        jwtToken.setExpirationDate(Date.from(Instant.now().plusSeconds(JwtTokenLifetime.PASSWORD_RESET_TOKEN_LIFESPAN_IN_SECONDS.getLifetime())));
+        passwordResetToken.setToken(token);
+        passwordResetToken.setUser(user);
+        passwordResetToken.setExpirationDate(Date.from(Instant.now().plusSeconds(JwtTokenLifetime.PASSWORD_RESET_TOKEN_LIFESPAN_IN_SECONDS.getLifetime())));
 
-        return passwordResetTokenRepository.save(jwtToken);
+        return passwordResetTokenRepository.save(passwordResetToken);
     }
 }

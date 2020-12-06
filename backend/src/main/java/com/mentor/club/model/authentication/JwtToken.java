@@ -11,6 +11,7 @@ import java.util.Calendar;
 import java.util.Date;
 
 @Entity
+@Inheritance
 @Getter
 @Setter
 public class JwtToken {
@@ -20,7 +21,7 @@ public class JwtToken {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private String id;
 
-    @Column(name = "token")
+    @Column(name = "token", length = 1024)
     @JsonProperty("token")
     private String token;
 
@@ -33,9 +34,17 @@ public class JwtToken {
     @JsonProperty("expirationDate")
     private Date expirationDate;
 
+    @Column(name = "tokenType")
+    @JsonProperty("tokenType")
+    private JwtTokenType jwtTokenType;
+
     public Boolean isExpired() {
         Calendar cal = Calendar.getInstance();
 
         return getExpirationDate().before(cal.getTime());
+    }
+
+    public JwtToken(JwtTokenType jwtTokenType) {
+        this.jwtTokenType = jwtTokenType;
     }
 }

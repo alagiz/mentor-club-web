@@ -1,4 +1,4 @@
-package com.mentor.club.utils;
+package com.mentor.club.service;
 
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
@@ -12,11 +12,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Service;
 
+import java.io.File;
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.security.GeneralSecurityException;
 import java.security.Key;
 import java.security.KeyFactory;
@@ -29,48 +29,57 @@ import java.util.Base64;
 import java.util.Date;
 import java.util.List;
 
-public final class RsaUtils {
-    private static final Logger LOGGER = LoggerFactory.getLogger(RsaUtils.class);
+@Service
+public class RsaService {
+    private static final Logger LOGGER = LoggerFactory.getLogger(RsaService.class);
 
     public static final String USERNAME_CLAIM = "username";
 
     @Value("${pem.keys.path.public}")
-    private static String publicKeyPath;
+    private String publicKeyPath;
 
     @Value("${pem.keys.path.private}")
-    private static String privateKeyPath;
+    private String privateKeyPath;
 
-    private static Key loadRSAPublicKey() {
+    private Key loadRSAPublicKey() {
         try {
-            String publicKeyContent = new String(Files.readAllBytes(Paths.get(ClassLoader.getSystemResource(publicKeyPath).toURI())));
-            publicKeyContent = publicKeyContent.replaceAll("\\n", "").replace("-----BEGIN PUBLIC KEY-----", "").replace("-----END PUBLIC KEY-----", "");
+            String publicKeyContent = new String(Files.readAllBytes(new File(publicKeyPath).toPath()));
+            publicKeyContent = publicKeyContent
+                    .replaceAll("\\n", "")
+                    .replaceAll("\\r", "")
+                    .replace("-----BEGIN PUBLIC KEY-----", "")
+                    .replace("-----END PUBLIC KEY-----", "");
             KeyFactory keyFactory = KeyFactory.getInstance("RSA");
             X509EncodedKeySpec keySpecX509 = new X509EncodedKeySpec(Base64.getDecoder().decode(publicKeyContent));
 
             return keyFactory.generatePublic(keySpecX509);
-        } catch (GeneralSecurityException | URISyntaxException | IOException exception) {
+        } catch (GeneralSecurityException | IOException exception) {
             LOGGER.error("Failed to load public key. Error: " + exception.getMessage());
 
             throw new InternalException(HttpStatus.INTERNAL_SERVER_ERROR, HttpCallError.READ_INPUT_STREAM);
         }
     }
 
-    private static Key loadRSAPrivateKey() {
+    private Key loadRSAPrivateKey() {
         try {
-            String privateKeyContent = new String(Files.readAllBytes(Paths.get(ClassLoader.getSystemResource(privateKeyPath).toURI())));
-            privateKeyContent = privateKeyContent.replaceAll("\\n", "").replace("-----BEGIN PRIVATE KEY-----", "").replace("-----END PRIVATE KEY-----", "");
+            String privateKeyContent = new String(Files.readAllBytes(new File(privateKeyPath).toPath()));
+            privateKeyContent = privateKeyContent
+                    .replaceAll("\\n", "")
+                    .replaceAll("\\r", "")
+                    .replace("-----BEGIN PRIVATE KEY-----", "")
+                    .replace("-----END PRIVATE KEY-----", "");
             KeyFactory keyFactory = KeyFactory.getInstance("RSA");
             PKCS8EncodedKeySpec keySpecPKCS8 = new PKCS8EncodedKeySpec(Base64.getDecoder().decode(privateKeyContent));
 
             return keyFactory.generatePrivate(keySpecPKCS8);
-        } catch (GeneralSecurityException | URISyntaxException | IOException exception) {
+        } catch (GeneralSecurityException | IOException exception) {
             LOGGER.error("Failed to load private key. Error: " + exception.getMessage());
 
             throw new InternalException(HttpStatus.INTERNAL_SERVER_ERROR, HttpCallError.READ_INPUT_STREAM);
         }
     }
 
-    public static String generateToken(String username, List<String> group, Long tokenLifetime) {
+    public String generateToken(String username, List<String> group, Long tokenLifetime) {
         try {
             Algorithm algorithm = getRsaAlgorithm();
             Date expirationDate = Date.from(Instant.now().plusSeconds(tokenLifetime));
@@ -88,14 +97,14 @@ public final class RsaUtils {
         }
     }
 
-    private static Algorithm getRsaAlgorithm() {
+    private Algorithm getRsaAlgorithm() {
         RSAPublicKey publicKey = (RSAPublicKey) loadRSAPublicKey();
         RSAPrivateKey privateKey = (RSAPrivateKey) loadRSAPrivateKey();
 
         return Algorithm.RSA256(publicKey, privateKey);
     }
 
-    public static DecodedJWT decodeToken(String token) throws JWTDecodeException, SignatureVerificationException {
+    public DecodedJWT decodeToken(String token) throws JWTDecodeException, SignatureVerificationException {
         DecodedJWT jwt = JWT.decode(token);
 
         getRsaAlgorithm().verify(jwt);
