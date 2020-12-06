@@ -32,7 +32,6 @@ import java.util.List;
 public final class RsaUtils {
     private static final Logger LOGGER = LoggerFactory.getLogger(RsaUtils.class);
 
-    public static final Long TOKEN_LIFESPAN = 4L * 3600L;
     public static final String USERNAME_CLAIM = "username";
 
     @Value("${pem.keys.path.public}")
@@ -71,10 +70,10 @@ public final class RsaUtils {
         }
     }
 
-    public static String generateToken(String username, List<String> group) {
+    public static String generateToken(String username, List<String> group, Long tokenLifetime) {
         try {
             Algorithm algorithm = getRsaAlgorithm();
-            Date expirationDate = Date.from(Instant.now().plusSeconds(TOKEN_LIFESPAN));
+            Date expirationDate = Date.from(Instant.now().plusSeconds(tokenLifetime));
 
             return JWT.create()
                     .withIssuer("user microservice")
@@ -84,9 +83,9 @@ public final class RsaUtils {
                     .sign(algorithm);
         } catch (JWTCreationException exception) {
             LOGGER.error("Error creating the JWT.");
-        }
 
-        return null;
+            throw new InternalException(HttpStatus.INTERNAL_SERVER_ERROR, HttpCallError.FAILED_TO_CREATE_TOKEN);
+        }
     }
 
     private static Algorithm getRsaAlgorithm() {

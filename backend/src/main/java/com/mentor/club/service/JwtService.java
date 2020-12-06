@@ -3,11 +3,14 @@ package com.mentor.club.service;
 import com.auth0.jwt.exceptions.JWTDecodeException;
 import com.auth0.jwt.exceptions.SignatureVerificationException;
 import com.auth0.jwt.interfaces.DecodedJWT;
+import com.mentor.club.exception.InternalException;
 import com.mentor.club.model.ExtendableResult;
 import com.mentor.club.model.InternalResponse;
 import com.mentor.club.model.authentication.JwtToken;
 import com.mentor.club.model.user.User;
 import com.mentor.club.repository.IAccessTokenRepository;
+import com.mentor.club.repository.IJwtTokenRepository;
+import com.mentor.club.repository.IRefreshTokenRepository;
 import com.mentor.club.repository.IUserRepository;
 import com.mentor.club.utils.RsaUtils;
 import org.slf4j.Logger;
@@ -22,9 +25,9 @@ import java.time.Instant;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
+import static com.mentor.club.model.error.HttpCallError.FAILED_TO_FIND_TOKEN;
 import static com.mentor.club.utils.RsaUtils.USERNAME_CLAIM;
 
 @Service
@@ -42,22 +45,25 @@ public class JwtService {
     static final String INFO_MESSAGE_NON_WHITELIST_JWT = "JWT is not whitelisted!";
 
     private IUserRepository userRepository;
-    private IAccessTokenRepository tokenRepository;
+    private IAccessTokenRepository accessTokenRepository;
+    private IRefreshTokenRepository refreshTokenRepository;
 
     @Value("${backend.deployment.url}")
     private String backendDeploymentUrl;
 
     @Autowired
-    public JwtService(IUserRepository userRepository, IAccessTokenRepository tokenRepository) {
+    public JwtService(IUserRepository userRepository,
+                      IAccessTokenRepository accessTokenRepository,
+                      IRefreshTokenRepository refreshTokenRepository) {
         this.userRepository = userRepository;
-        this.tokenRepository = tokenRepository;
+        this.accessTokenRepository = accessTokenRepository;
+        this.refreshTokenRepository = refreshTokenRepository;
     }
 
     public ResponseEntity validateJWT(String authorization) {
         DecodedJWT decodedJWT = null;
         String errorMessage = "";
-        String[] splitAuth = authorization.split(" ");
-        String token = splitAuth[splitAuth.length - 1];
+        String token = authorization.substring(authorization.lastIndexOf(" ") + 1);
 
         try {
             decodedJWT = RsaUtils.decodeToken(token);
@@ -114,10 +120,9 @@ public class JwtService {
             Optional<User> optionalUser = userRepository.findUserByUsername(username);
 
             if (optionalUser.isPresent()) {
-                UUID userId = optionalUser.get().getId();
-                List<JwtToken> userAccessTokens = tokenRepository.findByUserId(userId);
+                User user = optionalUser.get();
 
-                userAccessTokens.forEach(accessToken -> tokenRepository.delete(accessToken));
+                deleteAllJwtTokensForUser(user);
 
                 return new ResponseEntity<>(HttpStatus.OK);
             } else {
@@ -139,7 +144,7 @@ public class JwtService {
             Optional<User> optionalUser = userRepository.findUserByUsername(username);
 
             if (optionalUser.isPresent()) {
-                List<JwtToken> userAccessTokens = tokenRepository.findByUserId(optionalUser.get().getId());
+                List<JwtToken> userAccessTokens = accessTokenRepository.findByUserId(optionalUser.get().getId());
 
                 boolean isTokenPresent = userAccessTokens
                         .stream()
@@ -169,13 +174,56 @@ public class JwtService {
 
     private void removeTokenIfExpired(DecodedJWT decodedJWT) {
         try {
-            Optional<JwtToken> optionalToken = tokenRepository.findByToken(decodedJWT.getToken());
+            Optional<JwtToken> optionalToken = accessTokenRepository.findByToken(decodedJWT.getToken());
 
-            optionalToken.ifPresent(jwtToken -> tokenRepository.delete(jwtToken));
+            optionalToken.ifPresent(jwtToken -> accessTokenRepository.delete(jwtToken));
         } catch (Exception exception) {
             String username = decodedJWT.getClaims().get(USERNAME_CLAIM).asString();
 
             LOGGER.error("Failed to remove token for user with username " + username + ". Error: " + exception.getMessage());
+        }
+    }
+
+    protected void deleteJwtTokenForUser(User user, IJwtTokenRepository repository, JwtToken jwtToken) {
+        try {
+            Optional<JwtToken> token = repository.findByToken(jwtToken.getToken());
+
+            repository.delete(token.get());
+        } catch (Exception exception) {
+            LOGGER.error("Failed to remove token for user with username " + user.getUsername() + "!");
+        }
+    }
+
+    private void deleteJwtTokensForUser(User user, IJwtTokenRepository repository) {
+        try {
+            List<JwtToken> tokensOfUser = repository.findByUserId(user.getId());
+
+            tokensOfUser.forEach(jwtToken -> repository.delete(jwtToken));
+        } catch (Exception exception) {
+            LOGGER.error("Failed to remove all tokens for user with username " + user.getUsername() + "!");
+        }
+    }
+
+    void deleteAllJwtTokensForUser(User user) {
+        deleteJwtTokensForUser(user, accessTokenRepository);
+        deleteJwtTokensForUser(user, refreshTokenRepository);
+    }
+
+    JwtToken getAccessTokenFromAuthorizationString(String authorization) {
+        String token = authorization.substring(authorization.lastIndexOf(" ") + 1);
+
+        try {
+            Optional<JwtToken> jwtToken = accessTokenRepository.findByToken(token);
+
+            if (!jwtToken.isPresent()) {
+                throw new InternalException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, FAILED_TO_FIND_TOKEN);
+            }
+
+            return jwtToken.get();
+        } catch (Exception exception) {
+            LOGGER.error("Failed to get access token from authorization string " + authorization + "!");
+
+            throw new InternalException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, FAILED_TO_FIND_TOKEN);
         }
     }
 }

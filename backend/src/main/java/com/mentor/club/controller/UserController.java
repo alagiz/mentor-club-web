@@ -104,8 +104,10 @@ public class UserController {
             @ApiResponse(code = 200, message = "Authorized"),
             @ApiResponse(code = 401, message = "Invalid password"),
     })
-    public ResponseEntity getRefreshAndAccessToken(@CookieValue("refreshToken") String refreshTokenCookie, HttpServletResponse response) {
-        return userService.getRefreshAndAccessToken(refreshTokenCookie, response);
+    public ResponseEntity getRefreshAndAccessToken(@CookieValue("refreshToken") String refreshTokenCookie,
+                                                   @RequestHeader(name = "Authorization") String authorization,
+                                                   HttpServletResponse response) {
+        return userService.getRefreshAndAccessToken(refreshTokenCookie, authorization, response);
     }
 
     @PostMapping

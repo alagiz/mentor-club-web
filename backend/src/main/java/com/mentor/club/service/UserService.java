@@ -32,12 +32,12 @@ import javax.servlet.http.HttpServletResponse;
 import java.time.Instant;
 import java.util.*;
 
+import static com.mentor.club.model.error.HttpCallError.FAILED_TO_SAVE_TO_DB;
 import static com.mentor.club.model.error.HttpCallError.INVALID_INPUT;
 
 @Service
 public class UserService {
     private static final Logger LOGGER = LoggerFactory.getLogger(UserService.class);
-    public static final Integer REFRESH_TOKEN_LIFESPAN_IN_SECONDS = 3600 * 24 * 30; // 30 days
 
     private IUserRepository userRepository;
     private IAccessTokenRepository accessTokenRepository;
@@ -149,6 +149,8 @@ public class UserService {
 
                 User user = optionalUser.get();
 
+                jwtService.deleteAllJwtTokensForUser(user);
+
                 result.setUsername(username);
                 result.setThumbnailPhoto(user.getThumbnailBase64());
                 result.setToken(createJwtToken(user, JwtTokenLifetime.ACCESS_TOKEN_LIFESPAN_IN_SECONDS.getLifetime(), accessTokenRepository));
@@ -177,7 +179,7 @@ public class UserService {
         }
     }
 
-    public ResponseEntity getRefreshAndAccessToken(String refreshTokenCookie, HttpServletResponse httpServletResponse) {
+    public ResponseEntity getRefreshAndAccessToken(String refreshTokenCookie,  String authorization, HttpServletResponse httpServletResponse) {
         Optional<JwtToken> optionalRefreshToken = refreshTokenRepository.findByToken(refreshTokenCookie);
 
         if (!optionalRefreshToken.isPresent()) {
@@ -196,13 +198,13 @@ public class UserService {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
 
-        try {
-            refreshTokenRepository.delete(refreshToken);
-        } catch (Exception exception) {
-            LOGGER.error("Could not delete refresh token " + refreshToken.getToken() + "!");
-        }
-
         User user = optionalUser.get();
+
+        JwtToken accessToken = jwtService.getAccessTokenFromAuthorizationString(authorization);
+
+        jwtService.deleteJwtTokenForUser(user, accessTokenRepository, accessToken);
+        jwtService.deleteJwtTokenForUser(user, refreshTokenRepository, refreshToken);
+
         String newRefreshToken = createJwtToken(user, JwtTokenLifetime.REFRESH_TOKEN_LIFESPAN_IN_SECONDS.getLifetime(), refreshTokenRepository);
 
         Cookie cookieWithRefreshToken = createCookieWithRefreshToken(newRefreshToken);
@@ -222,7 +224,7 @@ public class UserService {
 
         cookie.setHttpOnly(true);
         cookie.setPath("/refresh-token");
-        cookie.setMaxAge(REFRESH_TOKEN_LIFESPAN_IN_SECONDS); // 30 days
+        cookie.setMaxAge(Math.toIntExact(JwtTokenLifetime.REFRESH_TOKEN_LIFESPAN_IN_SECONDS.getLifetime()));
         cookie.setSecure(true); // TODO check if needed with httpd
 
         return cookie;
@@ -237,8 +239,10 @@ public class UserService {
                 response.setHeader(HttpHeaders.SET_COOKIE, String.format("%s; %s", header, "SameSite=Strict"));
 
                 firstHeader = false;
+
                 continue;
             }
+
             response.addHeader(HttpHeaders.SET_COOKIE, String.format("%s; %s", header, "SameSite=Strict"));
         }
     }
@@ -249,7 +253,7 @@ public class UserService {
 
     private String createJwtToken(User user, Long tokenLifetime, JpaRepository<JwtToken, Long> repository) {
         List<String> userGroups = Arrays.asList("user"); // change in the future
-        String jwtTokenString = RsaUtils.generateToken(user.getUsername(), userGroups);
+        String jwtTokenString = RsaUtils.generateToken(user.getUsername(), userGroups, tokenLifetime);
 
         JwtToken jwtToken = new JwtToken();
 
@@ -257,9 +261,15 @@ public class UserService {
         jwtToken.setUser(user);
         jwtToken.setExpirationDate(Date.from(Instant.now().plusSeconds(tokenLifetime)));
 
-        repository.save(jwtToken);
+        try {
+            repository.save(jwtToken);
 
-        return jwtToken.getToken();
+            return jwtToken.getToken();
+        } catch (Exception exception) {
+            LOGGER.error("Could not create token for user " + user.getName() + "!");
+
+            throw new InternalException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, FAILED_TO_SAVE_TO_DB);
+        }
     }
 
     public PublicKeyResponse getPublicKeyResponse() {
