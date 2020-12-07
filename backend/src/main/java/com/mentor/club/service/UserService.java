@@ -203,8 +203,8 @@ public class UserService {
 
         AccessToken accessToken = jwtService.getAccessTokenFromAuthorizationString(authorization);
 
-        jwtService.<AccessToken>deleteJwtTokenForUser(user, accessTokenRepository, accessToken);
-        jwtService.<RefreshToken>deleteJwtTokenForUser(user, refreshTokenRepository, refreshToken);
+        jwtService.deleteJwtTokenForUser(user, accessTokenRepository, accessToken);
+        jwtService.deleteJwtTokenForUser(user, refreshTokenRepository, refreshToken);
 
         String newRefreshToken = createJwtToken(user, JwtTokenLifetime.REFRESH_TOKEN_LIFESPAN_IN_SECONDS.getLifetime(), refreshTokenRepository, JwtTokenType.REFRESH_TOKEN);
 
@@ -319,6 +319,8 @@ public class UserService {
 
     public ResponseEntity changeForgottenPassword(ChangeForgottenPasswordRequest changeForgottenPasswordRequest) {
         ResponseEntity responseEntity = validatePasswordResetToken(changeForgottenPasswordRequest.getPasswordResetToken());
+
+        // TODO actually change password
 
         return responseEntity;
     }

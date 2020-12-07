@@ -188,9 +188,9 @@ public class JwtService {
         }
     }
 
-    protected <T extends JwtToken> void deleteJwtTokenForUser(User user, IJwtTokenRepository repository, JwtToken jwtToken) {
+    protected void deleteJwtTokenForUser(User user, IJwtTokenRepository repository, JwtToken jwtToken) {
         try {
-            Optional<T> token = repository.findByToken(jwtToken.getToken());
+            Optional<JwtToken> token = repository.findByToken(jwtToken.getToken());
 
             repository.delete(token.get());
         } catch (Exception exception) {
@@ -198,9 +198,9 @@ public class JwtService {
         }
     }
 
-    private <T extends JwtToken> void deleteJwtTokensForUser(User user, IJwtTokenRepository repository) {
+    private void deleteJwtTokensForUser(User user, IJwtTokenRepository repository) {
         try {
-            List<T> tokensOfUser = repository.findByUserId(user.getId());
+            List<JwtToken> tokensOfUser = repository.findByUserId(user.getId());
 
             tokensOfUser.forEach(jwtToken -> repository.delete(jwtToken));
         } catch (Exception exception) {
