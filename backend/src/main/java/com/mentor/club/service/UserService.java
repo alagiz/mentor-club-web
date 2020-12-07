@@ -202,8 +202,8 @@ public class UserService {
 
         AccessToken accessToken = jwtService.getAccessTokenFromAuthorizationString(authorization);
 
-        jwtService.deleteJwtTokenForUser(user, accessTokenRepository, accessToken);
-        jwtService.deleteJwtTokenForUser(user, refreshTokenRepository, refreshToken);
+        jwtService.<AccessToken>deleteJwtTokenForUser(user, accessTokenRepository, accessToken);
+        jwtService.<RefreshToken>deleteJwtTokenForUser(user, refreshTokenRepository, refreshToken);
 
         String newRefreshToken = createJwtToken(user, JwtTokenLifetime.REFRESH_TOKEN_LIFESPAN_IN_SECONDS.getLifetime(), refreshTokenRepository, JwtTokenType.REFRESH_TOKEN);
 
@@ -254,22 +254,9 @@ public class UserService {
     private String createJwtToken(User user, Long tokenLifetime, IJwtTokenRepository repository, JwtTokenType jwtTokenType) {
         List<String> userGroups = Arrays.asList("user"); // change in the future
         String jwtTokenString = rsaService.generateToken(user.getUsername(), userGroups, tokenLifetime);
-        JwtToken jwtToken;
 
         try {
-            switch (jwtTokenType) {
-                case REFRESH_TOKEN:
-                    jwtToken = new RefreshToken(jwtTokenType);
-                    break;
-                case ACCESS_TOKEN:
-                    jwtToken = new AccessToken(jwtTokenType);
-                    break;
-                case PASSWORD_RESET_TOKEN:
-                    jwtToken = new PasswordResetToken(jwtTokenType);
-                    break;
-                default:
-                    throw new IllegalStateException("Unexpected value: " + jwtTokenType);
-            }
+            JwtToken jwtToken = JwtTokenFactory.createJwtTokenOfType(jwtTokenType);
 
             jwtToken.setToken(jwtTokenString);
             jwtToken.setUser(user);
@@ -336,7 +323,7 @@ public class UserService {
     }
 
     public ResponseEntity changePassword(ChangePasswordRequest changePasswordRequest, String authorization) {
-        ResponseEntity jwtValidationResult = jwtService.validateJWT(authorization);
+        ResponseEntity jwtValidationResult = jwtService.validateAccessToken(authorization);
         InternalResponse internalResponse = new InternalResponse();
 
         if (!jwtValidationResult.getStatusCode().is2xxSuccessful()) {

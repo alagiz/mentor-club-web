@@ -8,6 +8,7 @@ import com.mentor.club.model.ExtendableResult;
 import com.mentor.club.model.InternalResponse;
 import com.mentor.club.model.authentication.AccessToken;
 import com.mentor.club.model.authentication.JwtToken;
+import com.mentor.club.model.authentication.RefreshToken;
 import com.mentor.club.model.user.User;
 import com.mentor.club.repository.IAccessTokenRepository;
 import com.mentor.club.repository.IJwtTokenRepository;
@@ -63,7 +64,7 @@ public class JwtService {
         this.rsaService = rsaService;
     }
 
-    public ResponseEntity validateJWT(String authorization) {
+    public ResponseEntity validateAccessToken(String authorization) {
         DecodedJWT decodedJWT = null;
         String errorMessage = "";
         String token = authorization.substring(authorization.lastIndexOf(" ") + 1);
@@ -76,7 +77,7 @@ public class JwtService {
             errorMessage = ERROR_MESSAGE_SIGNATURE_VERIFICATION;
         }
 
-        InternalResponse authResponse = checkJwtToken(errorMessage, decodedJWT);
+        InternalResponse authResponse = checkAccessToken(errorMessage, decodedJWT);
 
         if (authResponse.getStatus() == HttpStatus.OK) {
             return new ResponseEntity<>(authResponse.getJson(), HttpStatus.OK);
@@ -85,7 +86,7 @@ public class JwtService {
         }
     }
 
-    public InternalResponse checkJwtToken(String errorMessage, DecodedJWT decodedJWT) {
+    public InternalResponse checkAccessToken(String errorMessage, DecodedJWT decodedJWT) {
         final InternalResponse internalResponse = new InternalResponse();
         final ExtendableResult resultJson = new ExtendableResult();
 
@@ -94,7 +95,7 @@ public class JwtService {
             resultJson.getProperties().put(MESSAGE_CLAIM, errorMessage);
             internalResponse.setStatus(HttpStatus.BAD_REQUEST);
         } else {
-            if (isTokenWhitelisted(decodedJWT)) {
+            if (isAccessTokenWhitelisted(decodedJWT)) {
                 resultJson.getProperties().put(MESSAGE_CLAIM, INFO_MESSAGE_VALID_JWT);
                 resultJson.getProperties().put(USER_ID_CLAIM, decodedJWT.getClaims().get(USERNAME_CLAIM).asString());
 
@@ -111,7 +112,7 @@ public class JwtService {
     }
 
     public ResponseEntity logout(String authorization, String username) {
-        boolean isActionAllowed = validateJWT(authorization).getStatusCode().is2xxSuccessful();
+        boolean isActionAllowed = validateAccessToken(authorization).getStatusCode().is2xxSuccessful();
 
         if (!isActionAllowed) {
             LOGGER.error("Failed to logout user with username " + username + ". JWT is invalid");
@@ -140,7 +141,7 @@ public class JwtService {
         }
     }
 
-    private boolean isTokenWhitelisted(DecodedJWT decodedJWT) {
+    private boolean isAccessTokenWhitelisted(DecodedJWT decodedJWT) {
         String username = decodedJWT.getClaims().get(USERNAME_CLAIM).asString();
 
         try {
@@ -187,9 +188,9 @@ public class JwtService {
         }
     }
 
-    protected void deleteJwtTokenForUser(User user, IJwtTokenRepository repository, JwtToken jwtToken) {
+    protected <T extends JwtToken> void deleteJwtTokenForUser(User user, IJwtTokenRepository repository, JwtToken jwtToken) {
         try {
-            Optional<JwtToken> token = repository.findByToken(jwtToken.getToken());
+            Optional<T> token = repository.findByToken(jwtToken.getToken());
 
             repository.delete(token.get());
         } catch (Exception exception) {
@@ -197,9 +198,9 @@ public class JwtService {
         }
     }
 
-    private void deleteJwtTokensForUser(User user, IJwtTokenRepository repository) {
+    private <T extends JwtToken> void deleteJwtTokensForUser(User user, IJwtTokenRepository repository) {
         try {
-            List<JwtToken> tokensOfUser = repository.findByUserId(user.getId());
+            List<T> tokensOfUser = repository.findByUserId(user.getId());
 
             tokensOfUser.forEach(jwtToken -> repository.delete(jwtToken));
         } catch (Exception exception) {
@@ -208,8 +209,8 @@ public class JwtService {
     }
 
     void deleteAllJwtTokensForUser(User user) {
-        deleteJwtTokensForUser(user, accessTokenRepository);
-        deleteJwtTokensForUser(user, refreshTokenRepository);
+        this.<AccessToken>deleteJwtTokensForUser(user, accessTokenRepository);
+        this.<RefreshToken>deleteJwtTokensForUser(user, refreshTokenRepository);
     }
 
     AccessToken getAccessTokenFromAuthorizationString(String authorization) {

@@ -27,6 +27,6 @@ class JwtController {
             @ApiResponse(code = 401, message = "Invalid Token"),
     })
     public ResponseEntity validateJwt(@ApiParam(value = "'Bearer' Token for validation") @RequestHeader(name = "Authorization") String authorization) {
-        return jwtService.validateJWT(authorization);
+        return jwtService.validateAccessToken(authorization);
     }
 }
