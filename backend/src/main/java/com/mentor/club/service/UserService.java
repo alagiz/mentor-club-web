@@ -5,6 +5,7 @@ import com.mentor.club.exception.InternalException;
 import com.mentor.club.model.InternalResponse;
 import com.mentor.club.model.PublicKeyResponse;
 import com.mentor.club.model.authentication.*;
+import com.mentor.club.model.authentication.token.*;
 import com.mentor.club.model.password.ChangeForgottenPasswordRequest;
 import com.mentor.club.model.password.ChangePasswordRequest;
 import com.mentor.club.model.user.NewUser;

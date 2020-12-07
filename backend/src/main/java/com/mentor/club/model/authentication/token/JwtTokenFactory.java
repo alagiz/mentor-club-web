@@ -1,4 +1,4 @@
-package com.mentor.club.model.authentication;
+package com.mentor.club.model.authentication.token;
 
 public final class JwtTokenFactory {
     public static JwtToken createJwtTokenOfType(JwtTokenType jwtTokenType) {

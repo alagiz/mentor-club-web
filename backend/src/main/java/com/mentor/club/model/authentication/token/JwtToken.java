@@ -1,4 +1,4 @@
-package com.mentor.club.model.authentication;
+package com.mentor.club.model.authentication.token;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.mentor.club.model.user.User;

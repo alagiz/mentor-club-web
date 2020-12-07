@@ -1,4 +1,4 @@
-package com.mentor.club.model.authentication;
+package com.mentor.club.model.authentication.token;
 
 public enum JwtTokenType {
     PASSWORD_RESET_TOKEN,
