@@ -5,6 +5,18 @@
   * https://medium.com/@angela.amarapala/sending-email-confirmation-for-account-activation-with-spring-java-cc3f5bb1398e
   * https://www.baeldung.com/spring-security-registration-i-forgot-my-password
   * https://medium.com/wolox/securing-applications-with-jwt-spring-boot-da24d3d98f83
+* temp env variables
+```bash
+POSTGRES_URL=localhost:8113;
+POSTGRES_DB_NAME=postgres;
+POSTGRES_USER_NAME=postgres;
+BACKEND_DEPLOYMENT_URL=http://localhost:8080;
+AWS_LAMBDA_CONFIRMATION_EMAIL_ARN=arn:aws:lambda:us-east-2:260654294406:function:ses;
+AWS_ACCESS_KEY_ID=AKIATZMBU4WDPXY2LTGZ;
+AWS_SECRET_ACCESS_KEY=XXXXXXXXXXXXXXXXXXX;
+PUBLIC_KEY_PATH=C:\Users\artem\WebstormProjects\mentor-club-web\backend\certificates\public_key.pem;
+PRIVATE_KEY_PATH=C:\Users\artem\WebstormProjects\mentor-club-web\backend\certificates\private_key_pkcs8.pem
+```
 
 Spring boot dockerized service template with an example.
 
