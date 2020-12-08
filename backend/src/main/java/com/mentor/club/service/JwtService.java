@@ -155,7 +155,7 @@ public class JwtService {
                         .map(JwtToken::getToken)
                         .collect(Collectors.toList())
                         .contains(decodedJWT.getToken());
-                boolean isTokenExpired = decodedJWT.getExpiresAt().after(Date.from(Instant.now()));
+                boolean isTokenExpired = decodedJWT.getExpiresAt().before(Date.from(Instant.now()));
 
                 if (isTokenPresent && isTokenExpired) {
                     removeAccessTokenIfExpired(decodedJWT);
