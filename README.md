@@ -23,7 +23,7 @@
 ### db [Postgres]
 *  
  
-## deployment
+## deployment 
 the app is deployed as a Docker Swarm stack of services into AWS t2.micro instance 
 
 
