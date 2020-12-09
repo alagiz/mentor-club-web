@@ -24,5 +24,4 @@
 [quality badge]: https://img.shields.io/codacy/grade/cd908732011c47bf831d2b661684babf?style=flat-square
 
 ## deployment
-
-TODO
+the app is deployed as a Docker Swarm stack of services into AWS t2.micro instance 
