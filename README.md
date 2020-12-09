@@ -6,7 +6,8 @@
 
 ## development
 
-### to start the app
+### frontend 
+
 * run 
   ```sh
   cd application
@@ -15,6 +16,8 @@
   yarn start # to start the app
   ```
 * login with any credentials
+
+### backend
 
 ## deployment
 the app is deployed as a Docker Swarm stack of services into AWS t2.micro instance 
