@@ -193,7 +193,7 @@ public class UserService {
         }
     }
 
-    public ResponseEntity getRefreshAndAccessToken(String refreshTokenCookie, String authorization, UUID deviceId, HttpServletResponse httpServletResponse) {
+    public ResponseEntity getRefreshAndAccessToken(String refreshTokenCookie, Optional<String> authorization, UUID deviceId, HttpServletResponse httpServletResponse) {
         Optional<RefreshToken> optionalRefreshToken = refreshTokenRepository.findByToken(refreshTokenCookie);
 
         if (!optionalRefreshToken.isPresent()) {
@@ -214,9 +214,12 @@ public class UserService {
 
         User user = optionalUser.get();
 
-        AccessToken accessToken = jwtService.getAccessTokenFromAuthorizationString(authorization);
+        if (authorization.isPresent()) {
+            AccessToken accessToken = jwtService.getAccessTokenFromAuthorizationString(authorization.get());
 
-        jwtService.deleteJwtTokenForUser(user, accessTokenRepository, accessToken);
+            jwtService.deleteJwtTokenForUser(user, accessTokenRepository, accessToken);
+        }
+
         jwtService.deleteJwtTokenForUser(user, refreshTokenRepository, refreshToken);
 
         JwtToken newRefreshToken = createJwtToken(user, JwtTokenLifetime.REFRESH_TOKEN_LIFESPAN_IN_SECONDS.getLifetime(), refreshTokenRepository, JwtTokenType.REFRESH_TOKEN);
@@ -227,11 +230,11 @@ public class UserService {
         httpServletResponse.addCookie(cookieWithRefreshToken);
         addSameSiteCookieAttribute(httpServletResponse);
 
-        WrappedJwtToken refreshWrappedJwtToken = new WrappedJwtToken();
+        WrappedJwtToken accessWrappedJwtToken = new WrappedJwtToken();
 
-        refreshWrappedJwtToken.setToken(createJwtToken(user, JwtTokenLifetime.ACCESS_TOKEN_LIFESPAN_IN_SECONDS.getLifetime(), accessTokenRepository, JwtTokenType.ACCESS_TOKEN).getToken());
+        accessWrappedJwtToken.setToken(createJwtToken(user, JwtTokenLifetime.ACCESS_TOKEN_LIFESPAN_IN_SECONDS.getLifetime(), accessTokenRepository, JwtTokenType.ACCESS_TOKEN).getToken());
 
-        return new ResponseEntity<>(refreshWrappedJwtToken, HttpStatus.OK);
+        return new ResponseEntity<>(accessWrappedJwtToken, HttpStatus.OK);
     }
 
     private Cookie createCookieWithRefreshToken(String refreshToken) {

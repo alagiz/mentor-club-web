@@ -12,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletResponse;
+import java.util.Optional;
 import java.util.UUID;
 
 @CrossOrigin()
@@ -105,7 +106,7 @@ public class UserController {
             @ApiResponse(code = 401, message = "Invalid password"),
     })
     public ResponseEntity getRefreshAndAccessToken(@CookieValue("refreshToken") String refreshTokenCookie,
-                                                   @RequestHeader(name = "Authorization") String authorization,
+                                                   @RequestHeader(name = "Authorization") Optional<String> authorization,
                                                    @RequestParam UUID deviceId,
                                                    HttpServletResponse response) {
         // TODO make authorization optional or remove
