@@ -6,7 +6,7 @@
 
 ## development
 
-### frontend 
+### frontend [React]
 
 * run 
   ```sh
@@ -17,7 +17,8 @@
   ```
 * login with any credentials
 
-### backend
+### backend [Spring Boot app, Java]
+* 
 
 ## deployment
 the app is deployed as a Docker Swarm stack of services into AWS t2.micro instance 
