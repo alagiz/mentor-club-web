@@ -16,7 +16,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @Getter
 @Setter
-public class JwtToken {
+public abstract class JwtToken {
     @Id
     @Column(name = "id", columnDefinition = "uuid")
     @Setter(AccessLevel.NONE)

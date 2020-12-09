@@ -6,16 +6,20 @@ import io.swagger.annotations.ApiModelProperty;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.UUID;
+
+@Setter
+@Getter
 public class AuthenticationRequest {
-    @Setter
-    @Getter
     @JsonProperty
     @ApiModelProperty(notes = "Username", required = true)
     String username;
 
-    @Setter
-    @Getter
     @JsonProperty
     @ApiModelProperty(notes = "Password", required = true)
     String password;
+
+    @JsonProperty("deviceId")
+    @ApiModelProperty(notes = "Device id", required = true)
+    private UUID deviceId;
 }

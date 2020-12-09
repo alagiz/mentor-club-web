@@ -106,8 +106,10 @@ public class UserController {
     })
     public ResponseEntity getRefreshAndAccessToken(@CookieValue("refreshToken") String refreshTokenCookie,
                                                    @RequestHeader(name = "Authorization") String authorization,
+                                                   @RequestParam UUID deviceId,
                                                    HttpServletResponse response) {
-        return userService.getRefreshAndAccessToken(refreshTokenCookie, authorization, response);
+        // TODO make authorization optional or remove
+        return userService.getRefreshAndAccessToken(refreshTokenCookie, authorization, deviceId, response);
     }
 
     @PostMapping

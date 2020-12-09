@@ -4,7 +4,8 @@ import com.google.gson.Gson;
 import com.mentor.club.exception.InternalException;
 import com.mentor.club.model.InternalResponse;
 import com.mentor.club.model.PublicKeyResponse;
-import com.mentor.club.model.authentication.*;
+import com.mentor.club.model.authentication.AuthenticationRequest;
+import com.mentor.club.model.authentication.AuthenticationResult;
 import com.mentor.club.model.authentication.token.*;
 import com.mentor.club.model.password.ChangeForgottenPasswordRequest;
 import com.mentor.club.model.password.ChangePasswordRequest;
@@ -153,15 +154,16 @@ public class UserService {
 
                 result.setUsername(username);
                 result.setThumbnailPhoto(user.getThumbnailBase64());
-                result.setToken(createJwtToken(user, JwtTokenLifetime.ACCESS_TOKEN_LIFESPAN_IN_SECONDS.getLifetime(), accessTokenRepository, JwtTokenType.ACCESS_TOKEN));
+                result.setToken(createJwtToken(user, JwtTokenLifetime.ACCESS_TOKEN_LIFESPAN_IN_SECONDS.getLifetime(), accessTokenRepository, JwtTokenType.ACCESS_TOKEN).getToken());
                 result.setDisplayName(user.getName());
                 result.setThumbnailPhoto(user.getThumbnailBase64());
 
                 response.setJson(result);
                 response.setStatus(HttpStatus.OK);
 
-                String refreshToken = createJwtToken(user, JwtTokenLifetime.REFRESH_TOKEN_LIFESPAN_IN_SECONDS.getLifetime(), refreshTokenRepository, JwtTokenType.REFRESH_TOKEN);
-                Cookie cookieWithRefreshToken = createCookieWithRefreshToken(refreshToken);
+                JwtToken refreshToken = createJwtToken(user, JwtTokenLifetime.REFRESH_TOKEN_LIFESPAN_IN_SECONDS.getLifetime(), refreshTokenRepository, JwtTokenType.REFRESH_TOKEN);
+                setDeviceIdOnTheRefreshToken((RefreshToken) refreshToken, authentication.getDeviceId());
+                Cookie cookieWithRefreshToken = createCookieWithRefreshToken(refreshToken.getToken());
 
                 httpServletResponse.addCookie(cookieWithRefreshToken);
                 addSameSiteCookieAttribute(httpServletResponse);
@@ -180,7 +182,19 @@ public class UserService {
         }
     }
 
-    public ResponseEntity getRefreshAndAccessToken(String refreshTokenCookie, String authorization, HttpServletResponse httpServletResponse) {
+    private void setDeviceIdOnTheRefreshToken(RefreshToken refreshToken, UUID deviceId) {
+        try {
+            refreshToken.setDeviceId(deviceId);
+
+            refreshTokenRepository.save(refreshToken);
+        } catch (Exception exception) {
+            LOGGER.error("Could not update refresh token with deviceId " + deviceId + " for refreshToken " + refreshToken.getToken() + "!");
+
+            throw new InternalException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, FAILED_TO_SAVE_TO_DB, exception.getMessage());
+        }
+    }
+
+    public ResponseEntity getRefreshAndAccessToken(String refreshTokenCookie, String authorization, UUID deviceId, HttpServletResponse httpServletResponse) {
         Optional<RefreshToken> optionalRefreshToken = refreshTokenRepository.findByToken(refreshTokenCookie);
 
         if (!optionalRefreshToken.isPresent()) {
@@ -206,16 +220,17 @@ public class UserService {
         jwtService.deleteJwtTokenForUser(user, accessTokenRepository, accessToken);
         jwtService.deleteJwtTokenForUser(user, refreshTokenRepository, refreshToken);
 
-        String newRefreshToken = createJwtToken(user, JwtTokenLifetime.REFRESH_TOKEN_LIFESPAN_IN_SECONDS.getLifetime(), refreshTokenRepository, JwtTokenType.REFRESH_TOKEN);
+        JwtToken newRefreshToken = createJwtToken(user, JwtTokenLifetime.REFRESH_TOKEN_LIFESPAN_IN_SECONDS.getLifetime(), refreshTokenRepository, JwtTokenType.REFRESH_TOKEN);
+        setDeviceIdOnTheRefreshToken((RefreshToken) newRefreshToken, deviceId);
 
-        Cookie cookieWithRefreshToken = createCookieWithRefreshToken(newRefreshToken);
+        Cookie cookieWithRefreshToken = createCookieWithRefreshToken(newRefreshToken.getToken());
 
         httpServletResponse.addCookie(cookieWithRefreshToken);
         addSameSiteCookieAttribute(httpServletResponse);
 
         WrappedJwtToken refreshWrappedJwtToken = new WrappedJwtToken();
 
-        refreshWrappedJwtToken.setToken(createJwtToken(user, JwtTokenLifetime.ACCESS_TOKEN_LIFESPAN_IN_SECONDS.getLifetime(), accessTokenRepository, JwtTokenType.ACCESS_TOKEN));
+        refreshWrappedJwtToken.setToken(createJwtToken(user, JwtTokenLifetime.ACCESS_TOKEN_LIFESPAN_IN_SECONDS.getLifetime(), accessTokenRepository, JwtTokenType.ACCESS_TOKEN).getToken());
 
         return new ResponseEntity<>(refreshWrappedJwtToken, HttpStatus.OK);
     }
@@ -252,7 +267,7 @@ public class UserService {
         return new ResponseEntity<>(getPublicKeyResponse(), HttpStatus.OK);
     }
 
-    private String createJwtToken(User user, Long tokenLifetime, IJwtTokenRepository repository, JwtTokenType jwtTokenType) {
+    private JwtToken createJwtToken(User user, Long tokenLifetime, IJwtTokenRepository repository, JwtTokenType jwtTokenType) {
         List<String> userGroups = Arrays.asList("user"); // change in the future
         String jwtTokenString = rsaService.generateToken(user.getUsername(), userGroups, tokenLifetime);
 
@@ -265,7 +280,7 @@ public class UserService {
 
             repository.save(jwtToken);
 
-            return jwtToken.getToken();
+            return jwtToken;
         } catch (Exception exception) {
             LOGGER.error("Could not create token of type " + jwtTokenType.name() + " for user " + user.getUsername() + "!");
 

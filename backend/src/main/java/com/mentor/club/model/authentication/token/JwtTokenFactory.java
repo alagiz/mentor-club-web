@@ -15,8 +15,7 @@ public final class JwtTokenFactory {
                 jwtToken = new PasswordResetToken(jwtTokenType);
                 break;
             default:
-                jwtToken = new JwtToken(jwtTokenType);
-                break;
+                throw new IllegalStateException("Unexpected value for jwtTokenType: " + jwtTokenType);
         }
 
         return jwtToken;
