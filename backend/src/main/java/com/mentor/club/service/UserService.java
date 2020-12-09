@@ -197,10 +197,14 @@ public class UserService {
         Optional<RefreshToken> optionalRefreshToken = refreshTokenRepository.findByTokenAndDeviceId(refreshTokenCookie, deviceId);
 
         if (!optionalRefreshToken.isPresent()) {
-            Optional<RefreshToken> optionalRefreshTokenWithoutDeviceId = refreshTokenRepository.findByToken(refreshTokenCookie);
+            try {
+                Optional<RefreshToken> optionalRefreshTokenWithoutDeviceId = refreshTokenRepository.findByToken(refreshTokenCookie);
 
-            if (optionalRefreshTokenWithoutDeviceId.isPresent()) {
-                jwtService.deleteJwtToken(refreshTokenRepository, optionalRefreshTokenWithoutDeviceId.get());
+                if (optionalRefreshTokenWithoutDeviceId.isPresent()) {
+                    jwtService.deleteJwtToken(refreshTokenRepository, optionalRefreshTokenWithoutDeviceId.get());
+                }
+            } catch (Exception exception) {
+                return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
             }
 
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
