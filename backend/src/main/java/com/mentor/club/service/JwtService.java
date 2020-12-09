@@ -209,8 +209,8 @@ public class JwtService {
     }
 
     void deleteAllJwtTokensForUser(User user) {
-        this.<AccessToken>deleteJwtTokensForUser(user, accessTokenRepository);
-        this.<RefreshToken>deleteJwtTokensForUser(user, refreshTokenRepository);
+        this.deleteJwtTokensForUser(user, accessTokenRepository);
+        this.deleteJwtTokensForUser(user, refreshTokenRepository);
     }
 
     AccessToken getAccessTokenFromAuthorizationString(String authorization) {
