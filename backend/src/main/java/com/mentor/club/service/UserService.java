@@ -194,9 +194,15 @@ public class UserService {
     }
 
     public ResponseEntity getRefreshAndAccessToken(String refreshTokenCookie, Optional<String> authorization, UUID deviceId, HttpServletResponse httpServletResponse) {
-        Optional<RefreshToken> optionalRefreshToken = refreshTokenRepository.findByToken(refreshTokenCookie);
+        Optional<RefreshToken> optionalRefreshToken = refreshTokenRepository.findByTokenAndDeviceId(refreshTokenCookie, deviceId);
 
         if (!optionalRefreshToken.isPresent()) {
+            Optional<RefreshToken> optionalRefreshTokenWithoutDeviceId = refreshTokenRepository.findByToken(refreshTokenCookie);
+
+            if (optionalRefreshTokenWithoutDeviceId.isPresent()) {
+                jwtService.deleteJwtToken(refreshTokenRepository, optionalRefreshTokenWithoutDeviceId.get());
+            }
+
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
 
@@ -217,10 +223,10 @@ public class UserService {
         if (authorization.isPresent()) {
             AccessToken accessToken = jwtService.getAccessTokenFromAuthorizationString(authorization.get());
 
-            jwtService.deleteJwtTokenForUser(user, accessTokenRepository, accessToken);
+            jwtService.deleteJwtToken(accessTokenRepository, accessToken);
         }
 
-        jwtService.deleteJwtTokenForUser(user, refreshTokenRepository, refreshToken);
+        jwtService.deleteJwtToken(refreshTokenRepository, refreshToken);
 
         JwtToken newRefreshToken = createJwtToken(user, JwtTokenLifetime.REFRESH_TOKEN_LIFESPAN_IN_SECONDS.getLifetime(), refreshTokenRepository, JwtTokenType.REFRESH_TOKEN);
         setDeviceIdOnTheRefreshToken((RefreshToken) newRefreshToken, deviceId);

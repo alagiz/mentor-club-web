@@ -26,6 +26,7 @@ import java.time.Instant;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import static com.mentor.club.model.error.HttpCallError.FAILED_TO_FIND_TOKEN;
@@ -188,13 +189,13 @@ public class JwtService {
         }
     }
 
-    protected void deleteJwtTokenForUser(User user, IJwtTokenRepository repository, JwtToken jwtToken) {
+    protected void deleteJwtToken(IJwtTokenRepository repository, JwtToken jwtToken) {
         try {
             Optional<JwtToken> token = repository.findByToken(jwtToken.getToken());
 
             repository.delete(token.get());
         } catch (Exception exception) {
-            LOGGER.error("Failed to remove token for user with username " + user.getUsername() + "!");
+            LOGGER.error("Failed to remove " + jwtToken.getJwtTokenType().name() + " token: " + jwtToken.getToken() + "!");
         }
     }
 
