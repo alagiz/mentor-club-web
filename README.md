@@ -7,15 +7,15 @@
 ## development
 
 ### frontend [React]
-
-* run 
+* use the below commands to develop only frontend locally
   ```sh
   cd application
   yarn install # to install dependencies
   yarn json-server # to start local server with mock data
   yarn start # to start the app
   ```
-* login with any credentials
+  * login with any credentials
+* 
 
 ### backend [Spring Boot app, Java]
 * 
