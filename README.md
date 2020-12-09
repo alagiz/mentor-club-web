@@ -4,12 +4,12 @@
 [![coverage status][coverage badge]][COVERAGE_URL]
 
 
-## development   
+## development
 
 ### frontend [React]
 * use the below commands to develop only frontend locally
   ```sh
-  cd application 
+  cd application
   yarn install # to install dependencies
   yarn json-server # to start local server with mock data
   yarn start # to start the app
@@ -17,14 +17,14 @@
   * login with any credentials
 * to run frontend with backend running locally, change backend url in the frontend app
 
-### backend [Spring Boot app, Java] 
+### backend [Spring Boot app, Java]
 * 
- 
+
 ### db [Postgres]
-*   
+*
  
 ## deployment 
-the app is deployed as a Docker Swarm stack of services into AWS t2.micro instance   
+the app is deployed as a Docker Swarm stack of services into AWS t2.micro instance 
 
 
  
