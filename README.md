@@ -13,7 +13,7 @@
   yarn install # to install dependencies
   yarn json-server # to start local server with mock data
   yarn start # to start the app
-  ```
+  ``` 
   * login with any credentials
 * to run frontend with backend running locally, change backend url in the frontend app
 
