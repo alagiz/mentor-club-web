@@ -9,7 +9,7 @@
 ### frontend [React]
 * use the below commands to develop only frontend locally
   ```sh
-  cd application
+  cd application 
   yarn install # to install dependencies
   yarn json-server # to start local server with mock data
   yarn start # to start the app
