@@ -109,7 +109,6 @@ public class UserController {
                                                    @RequestHeader(name = "Authorization") Optional<String> authorization,
                                                    @RequestParam UUID deviceId,
                                                    HttpServletResponse response) {
-        // TODO make authorization optional or remove
         return userService.getRefreshAndAccessToken(refreshTokenCookie, authorization, deviceId, response);
     }
 
