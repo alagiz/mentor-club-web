@@ -61,7 +61,6 @@ public class UserService {
         this.awsService = awsService;
         this.jwtService = jwtService;
         this.passwordResetTokenRepository = passwordResetTokenRepository;
-        this.passwordResetTokenRepository = passwordResetTokenRepository;
         this.rsaService = rsaService;
     }
 
