@@ -131,6 +131,7 @@ public class UserService {
 
         String username = authentication.getUsername();
         String password = authentication.getPassword();
+        UUID deviceId = authentication.getDeviceId();
 
         try {
             Optional<User> optionalUser = userRepository.findUserByUsername(username);
@@ -139,6 +140,15 @@ public class UserService {
                 LOGGER.error("User with username " + username + " not found!");
 
                 response.setStatus(HttpStatus.NOT_FOUND);
+                response.setJson("User with username " + username + " not found!");
+
+                return response;
+            }
+
+            if (deviceId == null) {
+                LOGGER.error("Device id is not set for user " + username + "!");
+
+                response.setStatus(HttpStatus.BAD_REQUEST);
                 response.setJson("User with username " + username + " not found!");
 
                 return response;
@@ -161,7 +171,7 @@ public class UserService {
                 response.setStatus(HttpStatus.OK);
 
                 JwtToken refreshToken = createJwtToken(user, JwtTokenLifetime.REFRESH_TOKEN_LIFESPAN_IN_SECONDS.getLifetime(), refreshTokenRepository, JwtTokenType.REFRESH_TOKEN);
-                setDeviceIdOnTheRefreshToken((RefreshToken) refreshToken, authentication.getDeviceId());
+                setDeviceIdOnTheRefreshToken((RefreshToken) refreshToken, deviceId);
                 Cookie cookieWithRefreshToken = createCookieWithRefreshToken(refreshToken.getToken());
 
                 httpServletResponse.addCookie(cookieWithRefreshToken);
@@ -225,9 +235,13 @@ public class UserService {
         User user = optionalUser.get();
 
         if (authorization.isPresent()) {
-            AccessToken accessToken = jwtService.getAccessTokenFromAuthorizationString(authorization.get());
+            try {
+                AccessToken accessToken = jwtService.getAccessTokenFromAuthorizationString(authorization.get());
 
-            jwtService.deleteJwtToken(accessTokenRepository, accessToken);
+                jwtService.deleteJwtToken(accessTokenRepository, accessToken);
+            } catch (Exception exception) {
+                LOGGER.error("Could not delete access token for refresh token with deviceId " + deviceId + " and refreshToken " + refreshToken.getToken() + "!");
+            }
         }
 
         jwtService.deleteJwtToken(refreshTokenRepository, refreshToken);
