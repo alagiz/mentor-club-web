@@ -154,7 +154,7 @@ public class UserService {
                 return response;
             }
 
-            if (!checkPassword(password, optionalUser.get().getHashedPassword())) {
+            if (!isProvidedPasswordCorrect(password, optionalUser.get().getHashedPassword())) {
                 LOGGER.error("Incorrect password for user with username " + username + "!");
 
                 response.setJson("Incorrect password for user with username " + username + "!");
@@ -182,7 +182,7 @@ public class UserService {
 
             Optional<User> optionalUser = userRepository.findUserByUsername(username);
 
-            if (checkPassword(password, optionalUser.get().getHashedPassword())) {
+            if (isProvidedPasswordCorrect(password, optionalUser.get().getHashedPassword())) {
                 LOGGER.debug("Correct password for user with username " + username + "!");
 
                 User user = optionalUser.get();
@@ -388,7 +388,7 @@ public class UserService {
         return BCrypt.hashpw(plainTextPassword, BCrypt.gensalt());
     }
 
-    private Boolean checkPassword(String plainPassword, String hashedPassword) {
+    private Boolean isProvidedPasswordCorrect(String plainPassword, String hashedPassword) {
         return BCrypt.checkpw(plainPassword, hashedPassword);
     }
 
@@ -444,7 +444,7 @@ public class UserService {
         }
 
         String userHashedPassword = user.get().getHashedPassword();
-        boolean isPasswordCorrect = checkPassword(changePasswordRequest.getPassword(), userHashedPassword);
+        boolean isPasswordCorrect = isProvidedPasswordCorrect(changePasswordRequest.getPassword(), userHashedPassword);
 
         if (!isPasswordCorrect) {
             internalResponse.setStatus(HttpStatus.UNAUTHORIZED);
