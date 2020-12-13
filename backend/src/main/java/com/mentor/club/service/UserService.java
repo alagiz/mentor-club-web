@@ -174,8 +174,6 @@ public class UserService {
             InternalResponse response = new InternalResponse();
             AuthenticationResult result = new AuthenticationResult();
 
-            response.setStatus(HttpStatus.OK);
-
             String username = authentication.getUsername();
             String password = authentication.getPassword();
             UUID deviceId = authentication.getDeviceId();
