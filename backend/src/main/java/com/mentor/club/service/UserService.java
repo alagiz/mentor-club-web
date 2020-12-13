@@ -125,16 +125,15 @@ public class UserService {
         }
     }
 
-    private InternalResponse authenticateWithCredentials(AuthenticationRequest authentication, HttpServletResponse httpServletResponse) {
-        InternalResponse response = new InternalResponse();
-        AuthenticationResult result = new AuthenticationResult();
-
-        String username = authentication.getUsername();
-        String password = authentication.getPassword();
-        UUID deviceId = authentication.getDeviceId();
-
+    private InternalResponse handleUnauthorizedFlow(AuthenticationRequest authentication) {
         try {
-            // negative flow
+            InternalResponse response = new InternalResponse();
+            response.setStatus(HttpStatus.OK);
+
+            String username = authentication.getUsername();
+            String password = authentication.getPassword();
+            UUID deviceId = authentication.getDeviceId();
+
             Optional<User> optionalUser = userRepository.findUserByUsername(username);
 
             if (!optionalUser.isPresent()) {
@@ -155,7 +154,34 @@ public class UserService {
                 return response;
             }
 
-            // successful flow
+            if (!checkPassword(password, optionalUser.get().getHashedPassword())) {
+                LOGGER.error("Incorrect password for user with username " + username + "!");
+
+                response.setJson("Incorrect password for user with username " + username + "!");
+                response.setStatus(HttpStatus.UNAUTHORIZED);
+            }
+
+            return response;
+        } catch (Exception exception) {
+            LOGGER.error(ExceptionUtils.getStackTrace(exception));
+
+            throw new InternalException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, INVALID_INPUT, exception.getMessage());
+        }
+    }
+
+    private InternalResponse handleAuthorizedFlow(AuthenticationRequest authentication, HttpServletResponse httpServletResponse) {
+        try {
+            InternalResponse response = new InternalResponse();
+            AuthenticationResult result = new AuthenticationResult();
+
+            response.setStatus(HttpStatus.OK);
+
+            String username = authentication.getUsername();
+            String password = authentication.getPassword();
+            UUID deviceId = authentication.getDeviceId();
+
+            Optional<User> optionalUser = userRepository.findUserByUsername(username);
+
             if (checkPassword(password, optionalUser.get().getHashedPassword())) {
                 LOGGER.debug("Correct password for user with username " + username + "!");
 
@@ -181,9 +207,6 @@ public class UserService {
                 httpServletResponse.addCookie(cookieWithRefreshToken);
                 addSameSiteCookieAttribute(httpServletResponse);
             } else {
-                LOGGER.error("Incorrect password for user with username " + username + "!");
-
-                response.setJson("Incorrect password for user with username " + username + "!");
                 response.setStatus(HttpStatus.UNAUTHORIZED);
             }
 
@@ -193,6 +216,16 @@ public class UserService {
 
             throw new InternalException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, INVALID_INPUT, exception.getMessage());
         }
+    }
+
+    private InternalResponse authenticateWithCredentials(AuthenticationRequest authentication, HttpServletResponse httpServletResponse) {
+        InternalResponse internalResponse = handleUnauthorizedFlow(authentication);
+
+        if (internalResponse.getStatus().is2xxSuccessful()) {
+            return handleAuthorizedFlow(authentication, httpServletResponse);
+        }
+
+        return internalResponse;
     }
 
     private void setDeviceIdOnJwtToken(JwtTokenWithDeviceId jwtTokenWithDeviceId, UUID deviceId, IJwtTokenWithDeviceIdRepository jwtTokenWithDeviceIdRepository) {
@@ -207,64 +240,85 @@ public class UserService {
         }
     }
 
-    public ResponseEntity getRefreshAndAccessToken(String refreshTokenCookie, Optional<String> authorization, UUID deviceId, HttpServletResponse httpServletResponse) {
-        Optional<RefreshToken> optionalRefreshToken = refreshTokenRepository.findByTokenAndDeviceId(refreshTokenCookie, deviceId);
+    private ResponseEntity handleUnauthorizedTokenRefreshFlow(String refreshTokenCookie, Optional<String> authorization, UUID deviceId) {
+        try {
+            Optional<RefreshToken> optionalRefreshToken = refreshTokenRepository.findByTokenAndDeviceId(refreshTokenCookie, deviceId);
 
-        // negative flow
-        if (!optionalRefreshToken.isPresent()) {
-            try {
+            if (!optionalRefreshToken.isPresent()) {
                 Optional<RefreshToken> optionalRefreshTokenWithoutDeviceId = refreshTokenRepository.findByToken(refreshTokenCookie);
 
                 if (optionalRefreshTokenWithoutDeviceId.isPresent()) {
                     jwtService.deleteJwtToken(refreshTokenRepository, optionalRefreshTokenWithoutDeviceId.get());
                 }
-            } catch (Exception exception) {
+
                 return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
             }
 
-            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
-        }
+            JwtToken refreshToken = optionalRefreshToken.get();
 
-        JwtToken refreshToken = optionalRefreshToken.get();
-
-        if (refreshToken.isExpired()) {
-            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
-        }
-
-        Optional<User> optionalUser = userRepository.findById(refreshToken.getUser().getId());
-
-        if (!optionalUser.isPresent()) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
-
-        User user = optionalUser.get();
-
-        if (authorization.isPresent()) {
-            try {
-                AccessToken accessToken = jwtService.getAccessTokenFromAuthorizationString(authorization.get());
-
-                jwtService.deleteJwtToken(accessTokenRepository, accessToken);
-            } catch (Exception exception) {
-                LOGGER.error("Could not delete access token for refresh token with deviceId " + deviceId + " and refreshToken " + refreshToken.getToken() + "!");
+            if (refreshToken.isExpired()) {
+                return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
             }
+
+            Optional<User> optionalUser = userRepository.findById(refreshToken.getUser().getId());
+
+            if (!optionalUser.isPresent()) {
+                return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+            }
+
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+        } catch (Exception exception) {
+            LOGGER.error("Could not authorize with refresh token " + refreshTokenCookie + " and deviceId " + deviceId + "! Error: " + exception.getMessage());
+
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
-        // successful flow
+    }
 
-        jwtService.deleteJwtToken(refreshTokenRepository, refreshToken);
+    private ResponseEntity handleAuthorizedTokenRefreshFlow(String refreshTokenCookie, Optional<String> authorization, UUID deviceId, HttpServletResponse httpServletResponse) {
+        try {
+            Optional<RefreshToken> optionalRefreshToken = refreshTokenRepository.findByTokenAndDeviceId(refreshTokenCookie, deviceId);
+            Optional<User> optionalUser = userRepository.findById(optionalRefreshToken.get().getUser().getId());
 
-        JwtTokenWithDeviceId newRefreshToken = (JwtTokenWithDeviceId) createJwtToken(user, JwtTokenLifetime.REFRESH_TOKEN_LIFESPAN_IN_SECONDS.getLifetime(), refreshTokenRepository, JwtTokenType.REFRESH_TOKEN);
-        setDeviceIdOnJwtToken(newRefreshToken, deviceId, refreshTokenRepository);
+            jwtService.deleteJwtToken(refreshTokenRepository, optionalRefreshToken.get());
 
-        Cookie cookieWithRefreshToken = createCookieWithRefreshToken(newRefreshToken.getToken());
+            JwtTokenWithDeviceId newRefreshToken = (JwtTokenWithDeviceId) createJwtToken(optionalUser.get(), JwtTokenLifetime.REFRESH_TOKEN_LIFESPAN_IN_SECONDS.getLifetime(), refreshTokenRepository, JwtTokenType.REFRESH_TOKEN);
+            setDeviceIdOnJwtToken(newRefreshToken, deviceId, refreshTokenRepository);
 
-        httpServletResponse.addCookie(cookieWithRefreshToken);
-        addSameSiteCookieAttribute(httpServletResponse);
+            Cookie cookieWithRefreshToken = createCookieWithRefreshToken(newRefreshToken.getToken());
 
-        WrappedJwtToken accessWrappedJwtToken = new WrappedJwtToken();
+            httpServletResponse.addCookie(cookieWithRefreshToken);
+            addSameSiteCookieAttribute(httpServletResponse);
 
-        accessWrappedJwtToken.setToken(createJwtToken(user, JwtTokenLifetime.ACCESS_TOKEN_LIFESPAN_IN_SECONDS.getLifetime(), accessTokenRepository, JwtTokenType.ACCESS_TOKEN).getToken());
+            WrappedJwtToken accessWrappedJwtToken = new WrappedJwtToken();
 
-        return new ResponseEntity<>(accessWrappedJwtToken, HttpStatus.OK);
+            accessWrappedJwtToken.setToken(createJwtToken(optionalUser.get(), JwtTokenLifetime.ACCESS_TOKEN_LIFESPAN_IN_SECONDS.getLifetime(), accessTokenRepository, JwtTokenType.ACCESS_TOKEN).getToken());
+
+            if (authorization.isPresent()) {
+                try {
+                    AccessToken accessToken = jwtService.getAccessTokenFromAuthorizationString(authorization.get());
+
+                    jwtService.deleteJwtToken(accessTokenRepository, accessToken);
+                } catch (Exception exception) {
+                    LOGGER.error("Could not delete access token for refresh token with deviceId " + deviceId + " and refreshToken " + refreshTokenCookie + "!");
+                }
+            }
+
+            return new ResponseEntity<>(accessWrappedJwtToken, HttpStatus.OK);
+        } catch (Exception exception) {
+            LOGGER.error("Could not authorize with refresh token " + refreshTokenCookie + " and deviceId " + deviceId + "!Error: " + exception.getMessage());
+
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+        }
+    }
+
+    public ResponseEntity getRefreshAndAccessToken(String refreshTokenCookie, Optional<String> authorization, UUID deviceId, HttpServletResponse httpServletResponse) {
+        ResponseEntity responseEntity = handleUnauthorizedTokenRefreshFlow(refreshTokenCookie, authorization, deviceId);
+
+        if (!responseEntity.getStatusCode().is2xxSuccessful()) {
+            return responseEntity;
+        }
+
+        return handleAuthorizedTokenRefreshFlow(refreshTokenCookie, authorization, deviceId, httpServletResponse);
     }
 
     private Cookie createCookieWithRefreshToken(String refreshToken) {
