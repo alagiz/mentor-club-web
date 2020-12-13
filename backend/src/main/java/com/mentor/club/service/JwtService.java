@@ -8,12 +8,8 @@ import com.mentor.club.model.ExtendableResult;
 import com.mentor.club.model.InternalResponse;
 import com.mentor.club.model.authentication.token.AccessToken;
 import com.mentor.club.model.authentication.token.JwtToken;
-import com.mentor.club.model.authentication.token.RefreshToken;
 import com.mentor.club.model.user.User;
-import com.mentor.club.repository.IAccessTokenRepository;
-import com.mentor.club.repository.IJwtTokenRepository;
-import com.mentor.club.repository.IRefreshTokenRepository;
-import com.mentor.club.repository.IUserRepository;
+import com.mentor.club.repository.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -199,6 +195,16 @@ public class JwtService {
         }
     }
 
+    private void deleteJwtTokensForUserForDevice(User user, IJwtTokenWithDeviceIdRepository repository, UUID deviceId) {
+        try {
+            List<JwtToken> tokensOfUser = repository.findByUserAndDeviceId(user, deviceId);
+
+            tokensOfUser.forEach(jwtToken -> repository.delete(jwtToken));
+        } catch (Exception exception) {
+            LOGGER.error("Failed to remove all tokens for user with username " + user.getUsername() + " and deviceId " + deviceId + " !");
+        }
+    }
+
     private void deleteJwtTokensForUser(User user, IJwtTokenRepository repository) {
         try {
             List<JwtToken> tokensOfUser = repository.findByUserId(user.getId());
@@ -207,6 +213,11 @@ public class JwtService {
         } catch (Exception exception) {
             LOGGER.error("Failed to remove all tokens for user with username " + user.getUsername() + "!");
         }
+    }
+
+    void deleteAllJwtTokensForUserForDevice(User user, UUID deviceId) {
+        this.deleteJwtTokensForUserForDevice(user, accessTokenRepository, deviceId);
+        this.deleteJwtTokensForUserForDevice(user, refreshTokenRepository, deviceId);
     }
 
     void deleteAllJwtTokensForUser(User user) {

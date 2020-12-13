@@ -134,6 +134,7 @@ public class UserService {
         UUID deviceId = authentication.getDeviceId();
 
         try {
+            // negative flow
             Optional<User> optionalUser = userRepository.findUserByUsername(username);
 
             if (!optionalUser.isPresent()) {
@@ -154,24 +155,27 @@ public class UserService {
                 return response;
             }
 
+            // successful flow
             if (checkPassword(password, optionalUser.get().getHashedPassword())) {
                 LOGGER.debug("Correct password for user with username " + username + "!");
 
                 User user = optionalUser.get();
 
-                jwtService.deleteAllJwtTokensForUser(user);
+                jwtService.deleteAllJwtTokensForUserForDevice(user, deviceId);
 
                 result.setUsername(username);
                 result.setThumbnailPhoto(user.getThumbnailBase64());
-                result.setToken(createJwtToken(user, JwtTokenLifetime.ACCESS_TOKEN_LIFESPAN_IN_SECONDS.getLifetime(), accessTokenRepository, JwtTokenType.ACCESS_TOKEN).getToken());
+                JwtTokenWithDeviceId accessToken = (JwtTokenWithDeviceId) createJwtToken(user, JwtTokenLifetime.ACCESS_TOKEN_LIFESPAN_IN_SECONDS.getLifetime(), accessTokenRepository, JwtTokenType.ACCESS_TOKEN);
+                setDeviceIdOnJwtToken(accessToken, deviceId, accessTokenRepository);
+
                 result.setDisplayName(user.getName());
                 result.setThumbnailPhoto(user.getThumbnailBase64());
 
                 response.setJson(result);
                 response.setStatus(HttpStatus.OK);
 
-                JwtToken refreshToken = createJwtToken(user, JwtTokenLifetime.REFRESH_TOKEN_LIFESPAN_IN_SECONDS.getLifetime(), refreshTokenRepository, JwtTokenType.REFRESH_TOKEN);
-                setDeviceIdOnTheRefreshToken((RefreshToken) refreshToken, deviceId);
+                JwtTokenWithDeviceId refreshToken = (JwtTokenWithDeviceId) createJwtToken(user, JwtTokenLifetime.REFRESH_TOKEN_LIFESPAN_IN_SECONDS.getLifetime(), refreshTokenRepository, JwtTokenType.REFRESH_TOKEN);
+                setDeviceIdOnJwtToken(refreshToken, deviceId, refreshTokenRepository);
                 Cookie cookieWithRefreshToken = createCookieWithRefreshToken(refreshToken.getToken());
 
                 httpServletResponse.addCookie(cookieWithRefreshToken);
@@ -191,13 +195,13 @@ public class UserService {
         }
     }
 
-    private void setDeviceIdOnTheRefreshToken(RefreshToken refreshToken, UUID deviceId) {
+    private void setDeviceIdOnJwtToken(JwtTokenWithDeviceId jwtTokenWithDeviceId, UUID deviceId, IJwtTokenWithDeviceIdRepository jwtTokenWithDeviceIdRepository) {
         try {
-            refreshToken.setDeviceId(deviceId);
+            jwtTokenWithDeviceId.setDeviceId(deviceId);
 
-            refreshTokenRepository.save(refreshToken);
+            jwtTokenWithDeviceIdRepository.save(jwtTokenWithDeviceId);
         } catch (Exception exception) {
-            LOGGER.error("Could not update refresh token with deviceId " + deviceId + " for refreshToken " + refreshToken.getToken() + "!");
+            LOGGER.error("Could not update refresh token with deviceId " + deviceId + " for refreshToken " + jwtTokenWithDeviceId.getToken() + "!");
 
             throw new InternalException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, FAILED_TO_SAVE_TO_DB, exception.getMessage());
         }
@@ -206,6 +210,7 @@ public class UserService {
     public ResponseEntity getRefreshAndAccessToken(String refreshTokenCookie, Optional<String> authorization, UUID deviceId, HttpServletResponse httpServletResponse) {
         Optional<RefreshToken> optionalRefreshToken = refreshTokenRepository.findByTokenAndDeviceId(refreshTokenCookie, deviceId);
 
+        // negative flow
         if (!optionalRefreshToken.isPresent()) {
             try {
                 Optional<RefreshToken> optionalRefreshTokenWithoutDeviceId = refreshTokenRepository.findByToken(refreshTokenCookie);
@@ -243,11 +248,12 @@ public class UserService {
                 LOGGER.error("Could not delete access token for refresh token with deviceId " + deviceId + " and refreshToken " + refreshToken.getToken() + "!");
             }
         }
+        // successful flow
 
         jwtService.deleteJwtToken(refreshTokenRepository, refreshToken);
 
-        JwtToken newRefreshToken = createJwtToken(user, JwtTokenLifetime.REFRESH_TOKEN_LIFESPAN_IN_SECONDS.getLifetime(), refreshTokenRepository, JwtTokenType.REFRESH_TOKEN);
-        setDeviceIdOnTheRefreshToken((RefreshToken) newRefreshToken, deviceId);
+        JwtTokenWithDeviceId newRefreshToken = (JwtTokenWithDeviceId) createJwtToken(user, JwtTokenLifetime.REFRESH_TOKEN_LIFESPAN_IN_SECONDS.getLifetime(), refreshTokenRepository, JwtTokenType.REFRESH_TOKEN);
+        setDeviceIdOnJwtToken(newRefreshToken, deviceId, refreshTokenRepository);
 
         Cookie cookieWithRefreshToken = createCookieWithRefreshToken(newRefreshToken.getToken());
 
