@@ -424,37 +424,51 @@ public class UserService {
         return responseEntity;
     }
 
-    public ResponseEntity changePassword(ChangePasswordRequest changePasswordRequest, String authorization) {
-        ResponseEntity jwtValidationResult = jwtService.validateAccessToken(authorization);
+    private ResponseEntity changePasswordNegativeFlow(ChangePasswordRequest changePasswordRequest, String authorization) {
+        try {
+            ResponseEntity jwtValidationResult = jwtService.validateAccessToken(authorization);
+            InternalResponse internalResponse = new InternalResponse();
+
+            if (!jwtValidationResult.getStatusCode().is2xxSuccessful()) {
+                return jwtValidationResult;
+            }
+
+            Optional<User> user = userRepository.findUserByUsername(changePasswordRequest.getUsername());
+
+            if (!user.isPresent()) {
+                internalResponse.setStatus(HttpStatus.NOT_FOUND);
+                internalResponse.setJson("User with username " + changePasswordRequest.getUsername() + " not found!");
+
+                return new ResponseEntity<>(internalResponse.getJson(), internalResponse.getStatus());
+            }
+
+            String userHashedPassword = user.get().getHashedPassword();
+            boolean isPasswordCorrect = isProvidedPasswordCorrect(changePasswordRequest.getPassword(), userHashedPassword);
+
+            if (!isPasswordCorrect) {
+                internalResponse.setStatus(HttpStatus.UNAUTHORIZED);
+                internalResponse.setJson("Incorrect password for user with username " + changePasswordRequest.getUsername() + "!");
+
+                return new ResponseEntity<>(internalResponse.getJson(), internalResponse.getStatus());
+            }
+
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+        } catch (Exception exception) {
+            LOGGER.error("Could not authorize password change for user " + changePasswordRequest.getUsername() + "!Error: " + exception.getMessage());
+
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+        }
+    }
+
+    private ResponseEntity changePasswordSuccessfulFlow(ChangePasswordRequest changePasswordRequest) {
         InternalResponse internalResponse = new InternalResponse();
 
-        if (!jwtValidationResult.getStatusCode().is2xxSuccessful()) {
-            return jwtValidationResult;
-        }
-
-        Optional<User> user = userRepository.findUserByUsername(changePasswordRequest.getUsername());
-
-        if (!user.isPresent()) {
-            internalResponse.setStatus(HttpStatus.NOT_FOUND);
-            internalResponse.setJson("User with username " + changePasswordRequest.getUsername() + " not found!");
-
-            return new ResponseEntity<>(internalResponse.getJson(), internalResponse.getStatus());
-        }
-
-        String userHashedPassword = user.get().getHashedPassword();
-        boolean isPasswordCorrect = isProvidedPasswordCorrect(changePasswordRequest.getPassword(), userHashedPassword);
-
-        if (!isPasswordCorrect) {
-            internalResponse.setStatus(HttpStatus.UNAUTHORIZED);
-            internalResponse.setJson("Incorrect password for user with username " + changePasswordRequest.getUsername() + "!");
-
-            return new ResponseEntity<>(internalResponse.getJson(), internalResponse.getStatus());
-        }
-
-        user.get().setHashedPassword(hashPassword(changePasswordRequest.getNewPassword()));
-
         try {
-            userRepository.save(user.get());
+            Optional<User> optionalUser = userRepository.findUserByUsername(changePasswordRequest.getUsername());
+            User user = optionalUser.get();
+
+            user.setHashedPassword(hashPassword(changePasswordRequest.getNewPassword()));
+            userRepository.save(user);
 
             internalResponse.setJson("Successfully change password for user with username " + changePasswordRequest.getUsername() + "!");
             internalResponse.setStatus(HttpStatus.OK);
@@ -466,6 +480,16 @@ public class UserService {
 
             return new ResponseEntity<>(internalResponse.getJson(), internalResponse.getStatus());
         }
+    }
+
+    public ResponseEntity changePassword(ChangePasswordRequest changePasswordRequest, String authorization) {
+        ResponseEntity responseEntity = changePasswordNegativeFlow(changePasswordRequest, authorization);
+
+        if (!responseEntity.getStatusCode().is2xxSuccessful()) {
+            return responseEntity;
+        }
+
+        return changePasswordSuccessfulFlow(changePasswordRequest);
     }
 
     private ResponseEntity validatePasswordResetToken(String token) {
