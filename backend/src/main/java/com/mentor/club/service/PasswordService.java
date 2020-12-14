@@ -32,7 +32,6 @@ public class PasswordService {
     private AwsService awsService;
     private JwtService jwtService;
     private IPasswordResetTokenRepository passwordResetTokenRepository;
-    private RsaService rsaService;
 
     @Value("${backend.deployment.url}")
     private String backendDeploymentUrl;
@@ -41,13 +40,11 @@ public class PasswordService {
     public PasswordService(IUserRepository userRepository,
                            AwsService awsService,
                            JwtService jwtService,
-                           IPasswordResetTokenRepository passwordResetTokenRepository,
-                           RsaService rsaService) {
+                           IPasswordResetTokenRepository passwordResetTokenRepository) {
         this.userRepository = userRepository;
         this.awsService = awsService;
         this.jwtService = jwtService;
         this.passwordResetTokenRepository = passwordResetTokenRepository;
-        this.rsaService = rsaService;
     }
 
     String hashPassword(String plainTextPassword) {

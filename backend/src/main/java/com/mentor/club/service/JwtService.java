@@ -108,6 +108,7 @@ public class JwtService {
         return internalResponse;
     }
 
+    // TODO introduce type
     ResponseEntity<Object> logout(String authorization, String username) {
         boolean isActionAllowed = validateAccessToken(authorization).getStatusCode().is2xxSuccessful();
 
