@@ -4,6 +4,7 @@ import com.mentor.club.model.authentication.AuthenticationRequest;
 import com.mentor.club.model.password.ChangeForgottenPasswordRequest;
 import com.mentor.club.model.password.ChangePasswordRequest;
 import com.mentor.club.model.user.NewUser;
+import com.mentor.club.service.PasswordService;
 import com.mentor.club.service.UserService;
 import io.swagger.annotations.*;
 import lombok.Getter;
@@ -20,12 +21,12 @@ import java.util.UUID;
 @RequestMapping("/user")
 @Api(value = "User authentication")
 public class UserController {
-    @Getter
-    @Setter
-    protected UserService userService;
+    private UserService userService;
+    private PasswordService passwordService;
 
-    public UserController(UserService userService) {
+    public UserController(UserService userService, PasswordService passwordService) {
         this.userService = userService;
+        this.passwordService = passwordService;
     }
 
     @PostMapping
@@ -71,7 +72,7 @@ public class UserController {
             @ApiResponse(code = 404, message = "User not found"),
     })
     public ResponseEntity generateResetForgottenPasswordEmail(@ApiParam(value = "Reset password") @RequestParam String email) {
-        return userService.generateResetForgottenPasswordEmail(email);
+        return passwordService.generateResetForgottenPasswordEmail(email);
     }
 
     @PostMapping
@@ -83,7 +84,7 @@ public class UserController {
     })
     public ResponseEntity changeForgottenPassword(@ApiParam(value = "Reset password")
                                                   @RequestBody ChangeForgottenPasswordRequest changeForgottenPasswordRequest) {
-        return userService.changeForgottenPassword(changeForgottenPasswordRequest);
+        return passwordService.changeForgottenPassword(changeForgottenPasswordRequest);
     }
 
     @PostMapping
@@ -95,7 +96,7 @@ public class UserController {
     })
     public ResponseEntity changePassword(@RequestBody ChangePasswordRequest changePasswordRequest,
                                          @RequestHeader(name = "Authorization") String authorization) {
-        return userService.changePassword(changePasswordRequest, authorization);
+        return passwordService.changePassword(changePasswordRequest, authorization);
     }
 
     @PostMapping

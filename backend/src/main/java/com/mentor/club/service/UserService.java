@@ -7,14 +7,11 @@ import com.mentor.club.model.PublicKeyResponse;
 import com.mentor.club.model.authentication.AuthenticationRequest;
 import com.mentor.club.model.authentication.AuthenticationResult;
 import com.mentor.club.model.authentication.token.*;
-import com.mentor.club.model.password.ChangeForgottenPasswordRequest;
-import com.mentor.club.model.password.ChangePasswordRequest;
 import com.mentor.club.model.user.NewUser;
 import com.mentor.club.model.user.User;
 import com.mentor.club.model.user.UserStatus;
 import com.mentor.club.repository.*;
 import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.mindrot.jbcrypt.BCrypt;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,6 +40,7 @@ public class UserService {
     private JwtService jwtService;
     private IPasswordResetTokenRepository passwordResetTokenRepository;
     private RsaService rsaService;
+    private PasswordService passwordService;
 
     @Value("${backend.deployment.url}")
     private String backendDeploymentUrl;
@@ -54,7 +52,8 @@ public class UserService {
                        AwsService awsService,
                        JwtService jwtService,
                        IPasswordResetTokenRepository passwordResetTokenRepository,
-                       RsaService rsaService) {
+                       RsaService rsaService,
+                       PasswordService passwordService) {
         this.userRepository = userRepository;
         this.accessTokenRepository = accessTokenRepository;
         this.refreshTokenRepository = refreshTokenRepository;
@@ -62,6 +61,7 @@ public class UserService {
         this.jwtService = jwtService;
         this.passwordResetTokenRepository = passwordResetTokenRepository;
         this.rsaService = rsaService;
+        this.passwordService = passwordService;
     }
 
     public ResponseEntity authenticate(AuthenticationRequest authentication, HttpServletResponse response) {
@@ -71,23 +71,23 @@ public class UserService {
     }
 
     public ResponseEntity createNewUser(NewUser newUser) {
-        if (isEmailAlreadyInUse(newUser.getEmail())) {
-            Optional<User> userWithGivenEmail = userRepository.findUserByEmail(newUser.getEmail());
-
-            String username = userWithGivenEmail.get().getUsername();
-            String message = "{\"error\":\"email already in use by user with username \'" + username + "\'\"}";
-
-            return new ResponseEntity<>(new Gson().toJson(message), HttpStatus.BAD_REQUEST);
-        }
-
-        User user = new User();
-        user.setEmail(newUser.getEmail());
-        user.setUsername(newUser.getUsername());
-        user.setHashedPassword(hashPassword(newUser.getPassword()));
-        user.setName(newUser.getName());
-        user.setThumbnailBase64(newUser.getThumbnailBase64());
-
         try {
+            if (isEmailAlreadyInUse(newUser.getEmail())) {
+                Optional<User> userWithGivenEmail = userRepository.findUserByEmail(newUser.getEmail());
+
+                String username = userWithGivenEmail.get().getUsername();
+                String message = "{\"error\":\"email already in use by user with username \'" + username + "\'\"}";
+
+                return new ResponseEntity<>(new Gson().toJson(message), HttpStatus.BAD_REQUEST);
+            }
+
+            User user = new User();
+            user.setEmail(newUser.getEmail());
+            user.setUsername(newUser.getUsername());
+            user.setHashedPassword(passwordService.hashPassword(newUser.getPassword()));
+            user.setName(newUser.getName());
+            user.setThumbnailBase64(newUser.getThumbnailBase64());
+
             User createdUser = userRepository.save(user);
 
             String confirmationUrl = backendDeploymentUrl + "/user/confirm-email/" + createdUser.getId();
@@ -154,7 +154,7 @@ public class UserService {
                 return response;
             }
 
-            if (!isProvidedPasswordCorrect(password, optionalUser.get().getHashedPassword())) {
+            if (!passwordService.isProvidedPasswordCorrect(password, optionalUser.get().getHashedPassword())) {
                 LOGGER.error("Incorrect password for user with username " + username + "!");
 
                 response.setJson("Incorrect password for user with username " + username + "!");
@@ -180,7 +180,7 @@ public class UserService {
 
             Optional<User> optionalUser = userRepository.findUserByUsername(username);
 
-            if (isProvidedPasswordCorrect(password, optionalUser.get().getHashedPassword())) {
+            if (passwordService.isProvidedPasswordCorrect(password, optionalUser.get().getHashedPassword())) {
                 LOGGER.debug("Correct password for user with username " + username + "!");
 
                 User user = optionalUser.get();
@@ -238,16 +238,14 @@ public class UserService {
         }
     }
 
-    private ResponseEntity handleUnauthorizedTokenRefreshFlow(String refreshTokenCookie, Optional<String> authorization, UUID deviceId) {
+    private ResponseEntity handleUnauthorizedTokenRefreshFlow(String refreshTokenCookie, UUID deviceId) {
         try {
             Optional<RefreshToken> optionalRefreshToken = refreshTokenRepository.findByTokenAndDeviceId(refreshTokenCookie, deviceId);
 
             if (!optionalRefreshToken.isPresent()) {
                 Optional<RefreshToken> optionalRefreshTokenWithoutDeviceId = refreshTokenRepository.findByToken(refreshTokenCookie);
 
-                if (optionalRefreshTokenWithoutDeviceId.isPresent()) {
-                    jwtService.deleteJwtToken(refreshTokenRepository, optionalRefreshTokenWithoutDeviceId.get());
-                }
+                optionalRefreshTokenWithoutDeviceId.ifPresent(refreshToken -> jwtService.deleteJwtToken(refreshTokenRepository, refreshToken));
 
                 return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
             }
@@ -310,7 +308,7 @@ public class UserService {
     }
 
     public ResponseEntity getRefreshAndAccessToken(String refreshTokenCookie, Optional<String> authorization, UUID deviceId, HttpServletResponse httpServletResponse) {
-        ResponseEntity responseEntity = handleUnauthorizedTokenRefreshFlow(refreshTokenCookie, authorization, deviceId);
+        ResponseEntity responseEntity = handleUnauthorizedTokenRefreshFlow(refreshTokenCookie, deviceId);
 
         if (!responseEntity.getStatusCode().is2xxSuccessful()) {
             return responseEntity;
@@ -382,14 +380,6 @@ public class UserService {
         return publicKeyResponse;
     }
 
-    private String hashPassword(String plainTextPassword) {
-        return BCrypt.hashpw(plainTextPassword, BCrypt.gensalt());
-    }
-
-    private Boolean isProvidedPasswordCorrect(String plainPassword, String hashedPassword) {
-        return BCrypt.checkpw(plainPassword, hashedPassword);
-    }
-
     public ResponseEntity logout(String authorization, String username) {
         return jwtService.logout(authorization, username);
     }
@@ -398,123 +388,5 @@ public class UserService {
         Optional<User> userWithGivenEmail = userRepository.findUserByEmail(email);
 
         return userWithGivenEmail.isPresent();
-    }
-
-    public ResponseEntity generateResetForgottenPasswordEmail(String email) {
-        Optional<User> userWithGivenEmail = userRepository.findUserByEmail(email);
-
-        if (!userWithGivenEmail.isPresent()) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
-
-        JwtToken passwordResetToken = createPasswordResetTokenForUser(userWithGivenEmail.get());
-        String resetPasswordUrl = backendDeploymentUrl + "/user/change-password?token=" + passwordResetToken.getToken();
-        HttpStatus passwordResetEmailSentStatusCode = awsService.sendPasswordResetEmail(resetPasswordUrl, userWithGivenEmail.get());
-
-        LOGGER.debug("Status code of sending password reset email: " + passwordResetEmailSentStatusCode.toString());
-
-        return new ResponseEntity<>(HttpStatus.OK);
-    }
-
-    public ResponseEntity changeForgottenPassword(ChangeForgottenPasswordRequest changeForgottenPasswordRequest) {
-        ResponseEntity responseEntity = validatePasswordResetToken(changeForgottenPasswordRequest.getPasswordResetToken());
-
-        // TODO actually change password
-
-        return responseEntity;
-    }
-
-    private ResponseEntity changePasswordNegativeFlow(ChangePasswordRequest changePasswordRequest, String authorization) {
-        try {
-            ResponseEntity jwtValidationResult = jwtService.validateAccessToken(authorization);
-            InternalResponse internalResponse = new InternalResponse();
-
-            if (!jwtValidationResult.getStatusCode().is2xxSuccessful()) {
-                return jwtValidationResult;
-            }
-
-            Optional<User> user = userRepository.findUserByUsername(changePasswordRequest.getUsername());
-
-            if (!user.isPresent()) {
-                internalResponse.setStatus(HttpStatus.NOT_FOUND);
-                internalResponse.setJson("User with username " + changePasswordRequest.getUsername() + " not found!");
-
-                return new ResponseEntity<>(internalResponse.getJson(), internalResponse.getStatus());
-            }
-
-            String userHashedPassword = user.get().getHashedPassword();
-            boolean isPasswordCorrect = isProvidedPasswordCorrect(changePasswordRequest.getPassword(), userHashedPassword);
-
-            if (!isPasswordCorrect) {
-                internalResponse.setStatus(HttpStatus.UNAUTHORIZED);
-                internalResponse.setJson("Incorrect password for user with username " + changePasswordRequest.getUsername() + "!");
-
-                return new ResponseEntity<>(internalResponse.getJson(), internalResponse.getStatus());
-            }
-
-            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
-        } catch (Exception exception) {
-            LOGGER.error("Could not authorize password change for user " + changePasswordRequest.getUsername() + "!Error: " + exception.getMessage());
-
-            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
-        }
-    }
-
-    private ResponseEntity changePasswordSuccessfulFlow(ChangePasswordRequest changePasswordRequest) {
-        InternalResponse internalResponse = new InternalResponse();
-
-        try {
-            Optional<User> optionalUser = userRepository.findUserByUsername(changePasswordRequest.getUsername());
-            User user = optionalUser.get();
-
-            user.setHashedPassword(hashPassword(changePasswordRequest.getNewPassword()));
-            userRepository.save(user);
-
-            internalResponse.setJson("Successfully change password for user with username " + changePasswordRequest.getUsername() + "!");
-            internalResponse.setStatus(HttpStatus.OK);
-
-            return new ResponseEntity<>(internalResponse.getJson(), internalResponse.getStatus());
-        } catch (Exception exception) {
-            internalResponse.setJson("Failed to change password for user with username " + changePasswordRequest.getUsername() + ". Error: " + exception.getMessage());
-            internalResponse.setStatus(HttpStatus.BAD_REQUEST);
-
-            return new ResponseEntity<>(internalResponse.getJson(), internalResponse.getStatus());
-        }
-    }
-
-    public ResponseEntity changePassword(ChangePasswordRequest changePasswordRequest, String authorization) {
-        ResponseEntity responseEntity = changePasswordNegativeFlow(changePasswordRequest, authorization);
-
-        if (!responseEntity.getStatusCode().is2xxSuccessful()) {
-            return responseEntity;
-        }
-
-        return changePasswordSuccessfulFlow(changePasswordRequest);
-    }
-
-    private ResponseEntity validatePasswordResetToken(String token) {
-        Optional<PasswordResetToken> passwordResetToken = passwordResetTokenRepository.findByToken(token);
-
-        if (!passwordResetToken.isPresent()) {
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-        }
-
-        if (passwordResetToken.get().isExpired()) {
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-        }
-
-        return new ResponseEntity<>(HttpStatus.OK);
-    }
-
-    private PasswordResetToken createPasswordResetTokenForUser(User user) {
-        String token = UUID.randomUUID().toString();
-
-        PasswordResetToken passwordResetToken = new PasswordResetToken(JwtTokenType.PASSWORD_RESET_TOKEN);
-
-        passwordResetToken.setToken(token);
-        passwordResetToken.setUser(user);
-        passwordResetToken.setExpirationDate(Date.from(Instant.now().plusSeconds(JwtTokenLifetime.PASSWORD_RESET_TOKEN_LIFESPAN_IN_SECONDS.getLifetime())));
-
-        return passwordResetTokenRepository.save(passwordResetToken);
     }
 }
