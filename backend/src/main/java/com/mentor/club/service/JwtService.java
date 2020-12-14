@@ -61,7 +61,7 @@ public class JwtService {
         this.rsaService = rsaService;
     }
 
-    public ResponseEntity validateAccessToken(String authorization) {
+    public ResponseEntity<Object> validateAccessToken(String authorization) {
         DecodedJWT decodedJWT = null;
         String errorMessage = "";
         String token = authorization.substring(authorization.lastIndexOf(" ") + 1);
@@ -108,7 +108,7 @@ public class JwtService {
         return internalResponse;
     }
 
-    ResponseEntity logout(String authorization, String username) {
+    ResponseEntity<Object> logout(String authorization, String username) {
         boolean isActionAllowed = validateAccessToken(authorization).getStatusCode().is2xxSuccessful();
 
         if (!isActionAllowed) {
@@ -276,7 +276,7 @@ public class JwtService {
         }
     }
 
-    private ResponseEntity handleTokenRefreshUnauthorizedFlow(String refreshTokenCookie, UUID deviceId) {
+    private ResponseEntity<Object> handleTokenRefreshUnauthorizedFlow(String refreshTokenCookie, UUID deviceId) {
         try {
             Optional<RefreshToken> optionalRefreshToken = refreshTokenRepository.findByTokenAndDeviceId(refreshTokenCookie, deviceId);
 
@@ -346,7 +346,7 @@ public class JwtService {
     }
 
     public ResponseEntity getRefreshAndAccessToken(String refreshTokenCookie, Optional<String> authorization, UUID deviceId, HttpServletResponse httpServletResponse) {
-        ResponseEntity responseEntity = handleTokenRefreshUnauthorizedFlow(refreshTokenCookie, deviceId);
+        ResponseEntity<Object> responseEntity = handleTokenRefreshUnauthorizedFlow(refreshTokenCookie, deviceId);
 
         if (!responseEntity.getStatusCode().is2xxSuccessful()) {
             return responseEntity;
@@ -383,7 +383,7 @@ public class JwtService {
         }
     }
 
-    public ResponseEntity getPublicKey() {
+    public ResponseEntity<PublicKeyResponse> getPublicKey() {
         return new ResponseEntity<>(getPublicKeyResponse(), HttpStatus.OK);
     }
 
