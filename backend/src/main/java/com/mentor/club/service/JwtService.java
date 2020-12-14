@@ -6,41 +6,41 @@ import com.auth0.jwt.interfaces.DecodedJWT;
 import com.mentor.club.exception.InternalException;
 import com.mentor.club.model.ExtendableResult;
 import com.mentor.club.model.InternalResponse;
-import com.mentor.club.model.authentication.token.AccessToken;
-import com.mentor.club.model.authentication.token.JwtToken;
+import com.mentor.club.model.PublicKeyResponse;
+import com.mentor.club.model.authentication.token.*;
 import com.mentor.club.model.user.User;
 import com.mentor.club.repository.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServletResponse;
 import java.time.Instant;
-import java.util.Date;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.mentor.club.model.error.HttpCallError.FAILED_TO_FIND_TOKEN;
+import static com.mentor.club.model.error.HttpCallError.FAILED_TO_SAVE_TO_DB;
 import static com.mentor.club.service.RsaService.USERNAME_CLAIM;
 
 @Service
 public class JwtService {
     private static final Logger LOGGER = LoggerFactory.getLogger(JwtService.class);
 
-    static final String MESSAGE_CLAIM = "message";
-    static final String USER_ID_CLAIM = "user_id";
+    private static final String MESSAGE_CLAIM = "message";
+    private static final String USER_ID_CLAIM = "user_id";
 
-    static final String ERROR_MESSAGE_INVALID_TOKEN = "Invalid token.";
-    static final String ERROR_MESSAGE_SIGNATURE_VERIFICATION = "Signature verification exception.";
+    private static final String ERROR_MESSAGE_INVALID_TOKEN = "Invalid token.";
+    private static final String ERROR_MESSAGE_SIGNATURE_VERIFICATION = "Signature verification exception.";
 
-    static final String INFO_MESSAGE_VALID_JWT = "JWT is valid!";
-    static final String INFO_MESSAGE_INVALIDATED_JWT = "JWT has been invalidated!";
-    static final String INFO_MESSAGE_NON_WHITELIST_JWT = "JWT is not whitelisted!";
+    private static final String INFO_MESSAGE_VALID_JWT = "JWT is valid!";
+    private static final String INFO_MESSAGE_NON_WHITELIST_JWT = "JWT is not whitelisted!";
 
     private IUserRepository userRepository;
     private IAccessTokenRepository accessTokenRepository;
@@ -83,7 +83,7 @@ public class JwtService {
         }
     }
 
-    public InternalResponse checkAccessToken(String errorMessage, DecodedJWT decodedJWT) {
+    private InternalResponse checkAccessToken(String errorMessage, DecodedJWT decodedJWT) {
         final InternalResponse internalResponse = new InternalResponse();
         final ExtendableResult resultJson = new ExtendableResult();
 
@@ -108,7 +108,7 @@ public class JwtService {
         return internalResponse;
     }
 
-    public ResponseEntity logout(String authorization, String username) {
+    ResponseEntity logout(String authorization, String username) {
         boolean isActionAllowed = validateAccessToken(authorization).getStatusCode().is2xxSuccessful();
 
         if (!isActionAllowed) {
@@ -185,7 +185,7 @@ public class JwtService {
         }
     }
 
-    protected void deleteJwtToken(IJwtTokenRepository repository, JwtToken jwtToken) {
+    private void deleteJwtToken(IJwtTokenRepository repository, JwtToken jwtToken) {
         try {
             Optional<JwtToken> token = repository.findByToken(jwtToken.getToken());
 
@@ -199,7 +199,7 @@ public class JwtService {
         try {
             List<JwtToken> tokensOfUser = repository.findByUserAndDeviceId(user, deviceId);
 
-            tokensOfUser.forEach(jwtToken -> repository.delete(jwtToken));
+            tokensOfUser.forEach(repository::delete);
         } catch (Exception exception) {
             LOGGER.error("Failed to remove all tokens for user with username " + user.getUsername() + " and deviceId " + deviceId + " !");
         }
@@ -220,12 +220,12 @@ public class JwtService {
         this.deleteJwtTokensForUserForDevice(user, refreshTokenRepository, deviceId);
     }
 
-    void deleteAllJwtTokensForUser(User user) {
+    private void deleteAllJwtTokensForUser(User user) {
         this.deleteJwtTokensForUser(user, accessTokenRepository);
         this.deleteJwtTokensForUser(user, refreshTokenRepository);
     }
 
-    AccessToken getAccessTokenFromAuthorizationString(String authorization) {
+    private AccessToken getAccessTokenFromAuthorizationString(String authorization) {
         String token = authorization.substring(authorization.lastIndexOf(" ") + 1);
 
         try {
@@ -241,5 +241,159 @@ public class JwtService {
 
             throw new InternalException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, FAILED_TO_FIND_TOKEN);
         }
+    }
+
+    void setDeviceIdOnJwtToken(JwtTokenWithDeviceId jwtTokenWithDeviceId, UUID deviceId, IJwtTokenWithDeviceIdRepository jwtTokenWithDeviceIdRepository) {
+        try {
+            jwtTokenWithDeviceId.setDeviceId(deviceId);
+
+            jwtTokenWithDeviceIdRepository.save(jwtTokenWithDeviceId);
+        } catch (Exception exception) {
+            LOGGER.error("Could not update refresh token with deviceId " + deviceId + " for refreshToken " + jwtTokenWithDeviceId.getToken() + "!");
+
+            throw new InternalException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, FAILED_TO_SAVE_TO_DB, exception.getMessage());
+        }
+    }
+
+    JwtToken createJwtToken(User user, Long tokenLifetime, IJwtTokenRepository repository, JwtTokenType jwtTokenType) {
+        List<String> userGroups = Arrays.asList("user"); // change in the future
+        String jwtTokenString = rsaService.generateToken(user.getUsername(), userGroups, tokenLifetime);
+
+        try {
+            JwtToken jwtToken = JwtTokenFactory.createJwtTokenOfType(jwtTokenType);
+
+            jwtToken.setToken(jwtTokenString);
+            jwtToken.setUser(user);
+            jwtToken.setExpirationDate(Date.from(Instant.now().plusSeconds(tokenLifetime)));
+
+            repository.save(jwtToken);
+
+            return jwtToken;
+        } catch (Exception exception) {
+            LOGGER.error("Could not create token of type " + jwtTokenType.name() + " for user " + user.getUsername() + "!");
+
+            throw new InternalException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, FAILED_TO_SAVE_TO_DB, exception.getMessage());
+        }
+    }
+
+    private ResponseEntity handleTokenRefreshUnauthorizedFlow(String refreshTokenCookie, UUID deviceId) {
+        try {
+            Optional<RefreshToken> optionalRefreshToken = refreshTokenRepository.findByTokenAndDeviceId(refreshTokenCookie, deviceId);
+
+            if (!optionalRefreshToken.isPresent()) {
+                Optional<RefreshToken> optionalRefreshTokenWithoutDeviceId = refreshTokenRepository.findByToken(refreshTokenCookie);
+
+                optionalRefreshTokenWithoutDeviceId.ifPresent(refreshToken -> deleteJwtToken(refreshTokenRepository, refreshToken));
+
+                return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+            }
+
+            JwtToken refreshToken = optionalRefreshToken.get();
+
+            if (refreshToken.isExpired()) {
+                return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+            }
+
+            Optional<User> optionalUser = userRepository.findById(refreshToken.getUser().getId());
+
+            if (!optionalUser.isPresent()) {
+                return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+            }
+
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+        } catch (Exception exception) {
+            LOGGER.error("Could not authorize with refresh token " + refreshTokenCookie + " and deviceId " + deviceId + "! Error: " + exception.getMessage());
+
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+        }
+    }
+
+    private ResponseEntity handleTokenRefreshAuthorizedFlow(String refreshTokenCookie, Optional<String> authorization, UUID deviceId, HttpServletResponse httpServletResponse) {
+        try {
+            Optional<RefreshToken> optionalRefreshToken = refreshTokenRepository.findByTokenAndDeviceId(refreshTokenCookie, deviceId);
+            Optional<User> optionalUser = userRepository.findById(optionalRefreshToken.get().getUser().getId());
+
+            deleteJwtToken(refreshTokenRepository, optionalRefreshToken.get());
+
+            JwtTokenWithDeviceId newRefreshToken = (JwtTokenWithDeviceId) createJwtToken(optionalUser.get(), JwtTokenLifetime.REFRESH_TOKEN_LIFESPAN_IN_SECONDS.getLifetime(), refreshTokenRepository, JwtTokenType.REFRESH_TOKEN);
+            setDeviceIdOnJwtToken(newRefreshToken, deviceId, refreshTokenRepository);
+
+            Cookie cookieWithRefreshToken = createCookieWithRefreshToken(newRefreshToken.getToken());
+
+            httpServletResponse.addCookie(cookieWithRefreshToken);
+            addSameSiteCookieAttribute(httpServletResponse);
+
+            WrappedJwtToken accessWrappedJwtToken = new WrappedJwtToken();
+
+            accessWrappedJwtToken.setToken(createJwtToken(optionalUser.get(), JwtTokenLifetime.ACCESS_TOKEN_LIFESPAN_IN_SECONDS.getLifetime(), accessTokenRepository, JwtTokenType.ACCESS_TOKEN).getToken());
+
+            if (authorization.isPresent()) {
+                try {
+                    AccessToken accessToken = getAccessTokenFromAuthorizationString(authorization.get());
+
+                    deleteJwtToken(accessTokenRepository, accessToken);
+                } catch (Exception exception) {
+                    LOGGER.error("Could not delete access token for refresh token with deviceId " + deviceId + " and refreshToken " + refreshTokenCookie + "!");
+                }
+            }
+
+            return new ResponseEntity<>(accessWrappedJwtToken, HttpStatus.OK);
+        } catch (Exception exception) {
+            LOGGER.error("Could not authorize with refresh token " + refreshTokenCookie + " and deviceId " + deviceId + "!Error: " + exception.getMessage());
+
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+        }
+    }
+
+    public ResponseEntity getRefreshAndAccessToken(String refreshTokenCookie, Optional<String> authorization, UUID deviceId, HttpServletResponse httpServletResponse) {
+        ResponseEntity responseEntity = handleTokenRefreshUnauthorizedFlow(refreshTokenCookie, deviceId);
+
+        if (!responseEntity.getStatusCode().is2xxSuccessful()) {
+            return responseEntity;
+        }
+
+        return handleTokenRefreshAuthorizedFlow(refreshTokenCookie, authorization, deviceId, httpServletResponse);
+    }
+
+    Cookie createCookieWithRefreshToken(String refreshToken) {
+        Cookie cookie = new Cookie("refreshToken", refreshToken);
+
+        cookie.setHttpOnly(true);
+        cookie.setPath("/refresh-token");
+        cookie.setMaxAge(Math.toIntExact(JwtTokenLifetime.REFRESH_TOKEN_LIFESPAN_IN_SECONDS.getLifetime()));
+        cookie.setSecure(true); // TODO check if needed with httpd
+
+        return cookie;
+    }
+
+    void addSameSiteCookieAttribute(HttpServletResponse response) {
+        Collection<String> headers = response.getHeaders(HttpHeaders.SET_COOKIE);
+        boolean firstHeader = true;
+
+        for (String header : headers) {
+            if (firstHeader) {
+                response.setHeader(HttpHeaders.SET_COOKIE, String.format("%s; %s", header, "SameSite=Strict"));
+
+                firstHeader = false;
+
+                continue;
+            }
+
+            response.addHeader(HttpHeaders.SET_COOKIE, String.format("%s; %s", header, "SameSite=Strict"));
+        }
+    }
+
+    public ResponseEntity getPublicKey() {
+        return new ResponseEntity<>(getPublicKeyResponse(), HttpStatus.OK);
+    }
+
+    private PublicKeyResponse getPublicKeyResponse() {
+
+        final PublicKeyResponse publicKeyResponse = new PublicKeyResponse();
+
+        // get public key from docker volume
+        // publicKeyResponse.setPublic_key(getProperty("PUBLIC_KEY"));
+
+        return publicKeyResponse;
     }
 }

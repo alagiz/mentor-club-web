@@ -4,11 +4,10 @@ import com.mentor.club.model.authentication.AuthenticationRequest;
 import com.mentor.club.model.password.ChangeForgottenPasswordRequest;
 import com.mentor.club.model.password.ChangePasswordRequest;
 import com.mentor.club.model.user.NewUser;
+import com.mentor.club.service.JwtService;
 import com.mentor.club.service.PasswordService;
 import com.mentor.club.service.UserService;
 import io.swagger.annotations.*;
-import lombok.Getter;
-import lombok.Setter;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -23,10 +22,12 @@ import java.util.UUID;
 public class UserController {
     private UserService userService;
     private PasswordService passwordService;
+    private JwtService jwtService;
 
-    public UserController(UserService userService, PasswordService passwordService) {
+    public UserController(UserService userService, PasswordService passwordService, JwtService jwtService) {
         this.userService = userService;
         this.passwordService = passwordService;
+        this.jwtService = jwtService;
     }
 
     @PostMapping
@@ -110,7 +111,7 @@ public class UserController {
                                                    @RequestHeader(name = "Authorization") Optional<String> authorization,
                                                    @RequestParam UUID deviceId,
                                                    HttpServletResponse response) {
-        return userService.getRefreshAndAccessToken(refreshTokenCookie, authorization, deviceId, response);
+        return jwtService.getRefreshAndAccessToken(refreshTokenCookie, authorization, deviceId, response);
     }
 
     @PostMapping
@@ -130,6 +131,6 @@ public class UserController {
     @RequestMapping("/public-key")
     @ApiOperation(value = "Request the public key")
     public ResponseEntity getPublicKey() {
-        return userService.getPublicKey();
+        return jwtService.getPublicKey();
     }
 }
