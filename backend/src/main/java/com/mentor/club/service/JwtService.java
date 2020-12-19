@@ -301,7 +301,7 @@ public class JwtService {
                 return new ResponseEntity<>(HttpStatus.NOT_FOUND);
             }
 
-            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+            return new ResponseEntity<>(HttpStatus.OK);
         } catch (Exception exception) {
             LOGGER.error("Could not authorize with refresh token " + refreshTokenCookie + " and deviceId " + deviceId + "! Error: " + exception.getMessage());
 
@@ -324,9 +324,12 @@ public class JwtService {
             httpServletResponse.addCookie(cookieWithRefreshToken);
             addSameSiteCookieAttribute(httpServletResponse);
 
-            WrappedJwtToken accessWrappedJwtToken = new WrappedJwtToken();
+//            WrappedJwtToken accessWrappedJwtToken = new WrappedJwtToken();
+            Map<String, String> accessWrappedJwtToken = new HashMap<>();
 
-            accessWrappedJwtToken.setToken(createJwtToken(optionalUser.get(), JwtTokenLifetime.ACCESS_TOKEN_LIFESPAN_IN_SECONDS.getLifetime(), accessTokenRepository, JwtTokenType.ACCESS_TOKEN).getToken());
+            accessWrappedJwtToken.put("token", createJwtToken(optionalUser.get(), JwtTokenLifetime.ACCESS_TOKEN_LIFESPAN_IN_SECONDS.getLifetime(), accessTokenRepository, JwtTokenType.ACCESS_TOKEN).getToken());
+
+//            accessWrappedJwtToken.setToken(createJwtToken(optionalUser.get(), JwtTokenLifetime.ACCESS_TOKEN_LIFESPAN_IN_SECONDS.getLifetime(), accessTokenRepository, JwtTokenType.ACCESS_TOKEN).getToken());
 
             if (authorization.isPresent()) {
                 try {
