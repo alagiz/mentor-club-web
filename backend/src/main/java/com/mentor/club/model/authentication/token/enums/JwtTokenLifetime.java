@@ -1,4 +1,4 @@
-package com.mentor.club.model.authentication.token;
+package com.mentor.club.model.authentication.token.enums;
 
 import lombok.Getter;
 

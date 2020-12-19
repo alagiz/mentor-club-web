@@ -1,6 +1,6 @@
 package com.mentor.club.repository;
 
-import com.mentor.club.model.authentication.token.RefreshToken;
+import com.mentor.club.model.authentication.token.concretes.RefreshToken;
 import org.springframework.stereotype.Repository;
 
 @Repository

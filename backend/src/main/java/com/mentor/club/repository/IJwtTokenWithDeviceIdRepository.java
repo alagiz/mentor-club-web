@@ -1,6 +1,6 @@
 package com.mentor.club.repository;
 
-import com.mentor.club.model.authentication.token.RefreshToken;
+import com.mentor.club.model.authentication.token.concretes.RefreshToken;
 import com.mentor.club.model.user.User;
 import org.springframework.data.repository.NoRepositoryBean;
 import org.springframework.data.repository.query.Param;

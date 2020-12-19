@@ -1,6 +1,6 @@
 package com.mentor.club.repository;
 
-import com.mentor.club.model.authentication.token.PasswordResetToken;
+import com.mentor.club.model.authentication.token.concretes.PasswordResetToken;
 import org.springframework.stereotype.Repository;
 
 @Repository

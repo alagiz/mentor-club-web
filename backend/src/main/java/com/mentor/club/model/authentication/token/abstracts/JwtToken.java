@@ -1,6 +1,7 @@
-package com.mentor.club.model.authentication.token;
+package com.mentor.club.model.authentication.token.abstracts;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.mentor.club.model.authentication.token.enums.JwtTokenType;
 import com.mentor.club.model.user.User;
 import lombok.AccessLevel;
 import lombok.Getter;
