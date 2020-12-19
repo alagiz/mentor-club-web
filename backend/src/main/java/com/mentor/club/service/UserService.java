@@ -171,6 +171,7 @@ public class UserService {
                 result.setThumbnailPhoto(user.getThumbnailBase64());
                 JwtTokenWithDeviceId accessToken = (JwtTokenWithDeviceId) jwtService.createJwtToken(user, JwtTokenLifetime.ACCESS_TOKEN_LIFESPAN_IN_SECONDS.getLifetime(), accessTokenRepository, JwtTokenType.ACCESS_TOKEN);
                 jwtService.setDeviceIdOnJwtToken(accessToken, deviceId, accessTokenRepository);
+                result.setToken(accessToken.getToken());
 
                 result.setDisplayName(user.getName());
                 result.setThumbnailPhoto(user.getThumbnailBase64());

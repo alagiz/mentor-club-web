@@ -210,7 +210,7 @@ public class JwtService {
         try {
             List<JwtToken> tokensOfUser = repository.findByUserId(user.getId());
 
-            tokensOfUser.forEach(jwtToken -> repository.delete(jwtToken));
+            tokensOfUser.forEach(repository::delete);
         } catch (Exception exception) {
             LOGGER.error("Failed to remove all tokens for user with username " + user.getUsername() + "!");
         }
@@ -360,7 +360,7 @@ public class JwtService {
         Cookie cookie = new Cookie("refreshToken", refreshToken);
 
         cookie.setHttpOnly(true);
-        cookie.setPath("/refresh-token");
+        cookie.setPath("/user/refresh-token");
         cookie.setMaxAge(Math.toIntExact(JwtTokenLifetime.REFRESH_TOKEN_LIFESPAN_IN_SECONDS.getLifetime()));
         cookie.setSecure(true); // TODO check if needed with httpd
 
