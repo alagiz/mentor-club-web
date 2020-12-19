@@ -317,19 +317,15 @@ public class JwtService {
             deleteJwtToken(refreshTokenRepository, optionalRefreshToken.get());
 
             JwtTokenWithDeviceId newRefreshToken = (JwtTokenWithDeviceId) createJwtToken(optionalUser.get(), JwtTokenLifetime.REFRESH_TOKEN_LIFESPAN_IN_SECONDS.getLifetime(), refreshTokenRepository, JwtTokenType.REFRESH_TOKEN);
-            setDeviceIdOnJwtToken(newRefreshToken, deviceId, refreshTokenRepository);
-
             Cookie cookieWithRefreshToken = createCookieWithRefreshToken(newRefreshToken.getToken());
 
+            setDeviceIdOnJwtToken(newRefreshToken, deviceId, refreshTokenRepository);
             httpServletResponse.addCookie(cookieWithRefreshToken);
             addSameSiteCookieAttribute(httpServletResponse);
 
-//            WrappedJwtToken accessWrappedJwtToken = new WrappedJwtToken();
             Map<String, String> accessWrappedJwtToken = new HashMap<>();
 
             accessWrappedJwtToken.put("token", createJwtToken(optionalUser.get(), JwtTokenLifetime.ACCESS_TOKEN_LIFESPAN_IN_SECONDS.getLifetime(), accessTokenRepository, JwtTokenType.ACCESS_TOKEN).getToken());
-
-//            accessWrappedJwtToken.setToken(createJwtToken(optionalUser.get(), JwtTokenLifetime.ACCESS_TOKEN_LIFESPAN_IN_SECONDS.getLifetime(), accessTokenRepository, JwtTokenType.ACCESS_TOKEN).getToken());
 
             if (authorization.isPresent()) {
                 try {
