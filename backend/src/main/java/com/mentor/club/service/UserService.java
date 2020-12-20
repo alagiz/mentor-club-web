@@ -129,7 +129,7 @@ public class UserService {
                 LOGGER.error("Device id is not set for user " + username + "!");
 
                 response.setStatus(HttpStatus.BAD_REQUEST);
-                response.setJson("User with username " + username + " not found!");
+                response.setJson("deviceId for user username " + username + " not found!");
 
                 return response;
             }

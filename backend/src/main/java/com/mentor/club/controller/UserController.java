@@ -100,8 +100,8 @@ public class UserController {
         return passwordService.changePassword(changePasswordRequest, authorization);
     }
 
-    @PostMapping
-    @RequestMapping("/refresh-token")
+    @GetMapping
+    @RequestMapping("/new-access-token")
     @ApiOperation(value = "Get new access and refresh tokens")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Authorized"),
