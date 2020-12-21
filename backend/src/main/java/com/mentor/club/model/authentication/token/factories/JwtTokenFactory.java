@@ -1,4 +1,4 @@
-package com.mentor.club.model.authentication.token;
+package com.mentor.club.model.authentication.token.factories;
 
 import com.mentor.club.model.authentication.token.abstracts.JwtToken;
 import com.mentor.club.model.authentication.token.concretes.AccessToken;
