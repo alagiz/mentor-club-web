@@ -12,10 +12,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletResponse;
-import java.util.Optional;
 import java.util.UUID;
 
-@CrossOrigin()
+@CrossOrigin
 @RestController
 @RequestMapping("/user")
 @Api(value = "User authentication")
@@ -98,20 +97,6 @@ public class UserController {
     public ResponseEntity changePassword(@RequestBody ChangePasswordRequest changePasswordRequest,
                                          @RequestHeader(name = "Authorization") String authorization) {
         return passwordService.changePassword(changePasswordRequest, authorization);
-    }
-
-    @GetMapping
-    @RequestMapping("/new-access-token")
-    @ApiOperation(value = "Get new access and refresh tokens")
-    @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Authorized"),
-            @ApiResponse(code = 401, message = "Invalid password"),
-    })
-    public ResponseEntity getRefreshAndAccessToken(@CookieValue("refreshToken") String refreshTokenCookie,
-                                                   @RequestHeader(name = "Authorization") Optional<String> authorization,
-                                                   @RequestParam UUID deviceId,
-                                                   HttpServletResponse response) {
-        return jwtService.getRefreshAndAccessToken(refreshTokenCookie, authorization, deviceId, response);
     }
 
     @PostMapping
