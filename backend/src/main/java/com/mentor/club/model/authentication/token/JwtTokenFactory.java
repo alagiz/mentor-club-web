@@ -2,6 +2,7 @@ package com.mentor.club.model.authentication.token;
 
 import com.mentor.club.model.authentication.token.abstracts.JwtToken;
 import com.mentor.club.model.authentication.token.concretes.AccessToken;
+import com.mentor.club.model.authentication.token.concretes.EmailConfirmToken;
 import com.mentor.club.model.authentication.token.concretes.PasswordResetToken;
 import com.mentor.club.model.authentication.token.concretes.RefreshToken;
 import com.mentor.club.model.authentication.token.enums.JwtTokenType;
@@ -19,6 +20,9 @@ public final class JwtTokenFactory {
                 break;
             case PASSWORD_RESET_TOKEN:
                 jwtToken = new PasswordResetToken(jwtTokenType);
+                break;
+            case EMAIL_CONFIRM_TOKEN:
+                jwtToken = new EmailConfirmToken(jwtTokenType);
                 break;
             default:
                 throw new IllegalStateException("Unexpected value for jwtTokenType: " + jwtTokenType);

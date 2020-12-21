@@ -5,13 +5,15 @@ import com.mentor.club.exception.InternalException;
 import com.mentor.club.model.InternalResponse;
 import com.mentor.club.model.authentication.AuthenticationRequest;
 import com.mentor.club.model.authentication.AuthenticationResult;
+import com.mentor.club.model.authentication.token.abstracts.JwtToken;
+import com.mentor.club.model.authentication.token.abstracts.JwtTokenWithDeviceId;
 import com.mentor.club.model.authentication.token.enums.JwtTokenLifetime;
 import com.mentor.club.model.authentication.token.enums.JwtTokenType;
-import com.mentor.club.model.authentication.token.abstracts.JwtTokenWithDeviceId;
 import com.mentor.club.model.user.NewUser;
 import com.mentor.club.model.user.User;
 import com.mentor.club.model.user.UserStatus;
 import com.mentor.club.repository.IAccessTokenRepository;
+import com.mentor.club.repository.IEmailConfirmTokenRepository;
 import com.mentor.club.repository.IRefreshTokenRepository;
 import com.mentor.club.repository.IUserRepository;
 import org.apache.commons.lang3.exception.ExceptionUtils;
@@ -28,6 +30,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.util.Optional;
 import java.util.UUID;
 
+import static com.mentor.club.model.error.HttpCallError.FAILED_TO_FIND_USER;
 import static com.mentor.club.model.error.HttpCallError.INVALID_INPUT;
 
 @Service
@@ -37,6 +40,7 @@ public class UserService {
     private IUserRepository userRepository;
     private IAccessTokenRepository accessTokenRepository;
     private IRefreshTokenRepository refreshTokenRepository;
+    private IEmailConfirmTokenRepository emailConfirmTokenRepository;
     private AwsService awsService;
     private JwtService jwtService;
     private PasswordService passwordService;
@@ -48,12 +52,14 @@ public class UserService {
     public UserService(IUserRepository userRepository,
                        IAccessTokenRepository accessTokenRepository,
                        IRefreshTokenRepository refreshTokenRepository,
+                       IEmailConfirmTokenRepository emailConfirmTokenRepository,
                        AwsService awsService,
                        JwtService jwtService,
                        PasswordService passwordService) {
         this.userRepository = userRepository;
         this.accessTokenRepository = accessTokenRepository;
         this.refreshTokenRepository = refreshTokenRepository;
+        this.emailConfirmTokenRepository = emailConfirmTokenRepository;
         this.awsService = awsService;
         this.jwtService = jwtService;
         this.passwordService = passwordService;
@@ -76,6 +82,10 @@ public class UserService {
             if (isEmailAlreadyInUse(newUser.getEmail())) {
                 Optional<User> userWithGivenEmail = userRepository.findUserByEmail(newUser.getEmail());
 
+                if (!userWithGivenEmail.isPresent()) {
+                    throw new InternalException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, INVALID_INPUT);
+                }
+
                 String username = userWithGivenEmail.get().getUsername();
                 String message = "{\"error\":\"email already in use by user with username \'" + username + "\'\"}";
 
@@ -90,8 +100,13 @@ public class UserService {
             user.setThumbnailBase64(newUser.getThumbnailBase64());
 
             User createdUser = userRepository.save(user);
-
-            String confirmationUrl = backendDeploymentUrl + "/user/confirm-email/" + createdUser.getId();
+            JwtToken emailConfirmToken = jwtService
+                    .createJwtToken(
+                            createdUser,
+                            JwtTokenLifetime.EMAIL_CONFIRM_TOKEN_LIFESPAN_IN_SECONDS.getLifetime(),
+                            emailConfirmTokenRepository,
+                            JwtTokenType.EMAIL_CONFIRM_TOKEN);
+            String confirmationUrl = backendDeploymentUrl + "/user/confirm-email/" + emailConfirmToken.getId();
 
             HttpStatus confirmationEmailSentStatusCode = awsService.sendConfirmationEmail(confirmationUrl, user);
 
@@ -159,6 +174,10 @@ public class UserService {
             UUID deviceId = authentication.getDeviceId();
 
             Optional<User> optionalUser = userRepository.findUserByUsername(username);
+
+            if (!optionalUser.isPresent()) {
+                throw new InternalException(HttpStatus.BAD_REQUEST, FAILED_TO_FIND_USER);
+            }
 
             if (passwordService.isProvidedPasswordCorrect(password, optionalUser.get().getHashedPassword())) {
                 LOGGER.debug("Correct password for user with username " + username + "!");

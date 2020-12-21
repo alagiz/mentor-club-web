@@ -54,14 +54,14 @@ public class UserController {
     }
 
     @GetMapping
-    @RequestMapping("/confirm-email/{userId}")
+    @RequestMapping("/confirm-email/{emailConfirmTokenId}")
     @ApiOperation(value = "Confirm email address")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Authorized"),
-            @ApiResponse(code = 404, message = "User id not found"),
+            @ApiResponse(code = 404, message = "EmailConfirmToken id not found"),
     })
-    public ResponseEntity confirmEmail(@ApiParam(value = "Confirm email") @PathVariable UUID userId) {
-        return userService.confirmEmail(userId);
+    public ResponseEntity confirmEmail(@ApiParam(value = "Confirm email") @PathVariable UUID emailConfirmTokenId) {
+        return userService.confirmEmail(emailConfirmTokenId);
     }
 
     @PostMapping

@@ -11,6 +11,7 @@ public enum HttpCallError {
     FAILED_TO_CREATE_TOKEN("Failed to create token"),
     FAILED_TO_SAVE_TO_DB("Failed to save to db"),
     FAILED_TO_FIND_TOKEN("Failed to find token in db"),
+    FAILED_TO_FIND_USER("Failed to find user in db"),
     SERVICE_UNAVAILABLE("Service unavailable"),
     EXTERNAL_ERROR("Error while trying to handle some external error"),
     READ_INPUT_STREAM("Error while trying to read data from an input stream"),
