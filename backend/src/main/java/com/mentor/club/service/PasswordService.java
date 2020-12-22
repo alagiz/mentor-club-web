@@ -2,9 +2,9 @@ package com.mentor.club.service;
 
 import com.mentor.club.model.InternalResponse;
 import com.mentor.club.model.authentication.token.abstracts.JwtToken;
+import com.mentor.club.model.authentication.token.concretes.PasswordResetToken;
 import com.mentor.club.model.authentication.token.enums.JwtTokenLifetime;
 import com.mentor.club.model.authentication.token.enums.JwtTokenType;
-import com.mentor.club.model.authentication.token.concretes.PasswordResetToken;
 import com.mentor.club.model.password.ChangeForgottenPasswordRequest;
 import com.mentor.club.model.password.ChangePasswordRequest;
 import com.mentor.club.model.user.User;

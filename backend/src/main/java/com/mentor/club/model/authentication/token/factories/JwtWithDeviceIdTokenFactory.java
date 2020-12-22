@@ -1,12 +1,22 @@
 package com.mentor.club.model.authentication.token.factories;
 
+import com.mentor.club.model.authentication.token.abstracts.AbstractJwtTokenFactory;
+import com.mentor.club.model.authentication.token.abstracts.JwtToken;
 import com.mentor.club.model.authentication.token.abstracts.JwtTokenWithDeviceId;
 import com.mentor.club.model.authentication.token.concretes.AccessToken;
 import com.mentor.club.model.authentication.token.concretes.RefreshToken;
 import com.mentor.club.model.authentication.token.enums.JwtTokenType;
+import org.springframework.stereotype.Component;
 
-public final class JwtWithDeviceIdTokenFactory {
-    public static JwtTokenWithDeviceId createJwtTokenWithDeviceIdOfType(JwtTokenType jwtTokenType) {
+@Component
+public final class JwtWithDeviceIdTokenFactory extends AbstractJwtTokenFactory {
+    @Override
+    public JwtToken getJwtToken(JwtTokenType jwtTokenType) {
+        return null;
+    }
+
+    @Override
+    public JwtTokenWithDeviceId getJwtTokenWithDeviceId(JwtTokenType jwtTokenType) {
         JwtTokenWithDeviceId jwtToken;
 
         switch (jwtTokenType) {

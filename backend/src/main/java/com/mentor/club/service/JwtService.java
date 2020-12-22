@@ -7,6 +7,7 @@ import com.mentor.club.exception.InternalException;
 import com.mentor.club.model.ExtendableResult;
 import com.mentor.club.model.InternalResponse;
 import com.mentor.club.model.PublicKeyResponse;
+import com.mentor.club.model.authentication.token.abstracts.AbstractJwtTokenFactory;
 import com.mentor.club.model.authentication.token.abstracts.JwtToken;
 import com.mentor.club.model.authentication.token.abstracts.JwtTokenWithDeviceId;
 import com.mentor.club.model.authentication.token.concretes.AccessToken;
@@ -14,6 +15,7 @@ import com.mentor.club.model.authentication.token.concretes.RefreshToken;
 import com.mentor.club.model.authentication.token.enums.JwtTokenLifetime;
 import com.mentor.club.model.authentication.token.enums.JwtTokenType;
 import com.mentor.club.model.authentication.token.factories.JwtTokenFactory;
+import com.mentor.club.model.authentication.token.factories.JwtWithDeviceIdTokenFactory;
 import com.mentor.club.model.user.User;
 import com.mentor.club.repository.*;
 import org.slf4j.Logger;
@@ -52,6 +54,8 @@ public class JwtService {
     private IAccessTokenRepository accessTokenRepository;
     private IRefreshTokenRepository refreshTokenRepository;
     private RsaService rsaService;
+    private AbstractJwtTokenFactory jwtTokenFactory;
+    private AbstractJwtTokenFactory jwtWithDeviceIdTokenFactory;
 
     @Value("${backend.deployment.url}")
     private String backendDeploymentUrl;
@@ -60,11 +64,15 @@ public class JwtService {
     public JwtService(IUserRepository userRepository,
                       IAccessTokenRepository accessTokenRepository,
                       IRefreshTokenRepository refreshTokenRepository,
-                      RsaService rsaService) {
+                      RsaService rsaService,
+                      JwtTokenFactory jwtTokenFactory,
+                      JwtWithDeviceIdTokenFactory jwtWithDeviceIdTokenFactory) {
         this.userRepository = userRepository;
         this.accessTokenRepository = accessTokenRepository;
         this.refreshTokenRepository = refreshTokenRepository;
         this.rsaService = rsaService;
+        this.jwtTokenFactory = jwtTokenFactory;
+        this.jwtWithDeviceIdTokenFactory = jwtWithDeviceIdTokenFactory;
     }
 
     public ResponseEntity<Object> validateAccessToken(String authorization) {
@@ -262,12 +270,12 @@ public class JwtService {
         }
     }
 
-    JwtToken createJwtToken(User user, Long tokenLifetime, IJwtTokenRepository repository, JwtTokenType jwtTokenType) {
-        List<String> userGroups = Arrays.asList("user"); // change in the future
-        String jwtTokenString = rsaService.generateToken(user.getUsername(), userGroups, tokenLifetime);
-
+    <T extends JwtToken> T createJwtToken(User user, Long tokenLifetime, IJwtTokenRepository repository, JwtTokenType jwtTokenType, Boolean isWithDeviceId) {
         try {
-            JwtToken jwtToken = JwtTokenFactory.createJwtTokenOfType(jwtTokenType);
+            JwtToken jwtToken = isWithDeviceId ? jwtWithDeviceIdTokenFactory.getJwtTokenWithDeviceId(jwtTokenType) : jwtTokenFactory.getJwtToken(jwtTokenType);
+
+            List<String> userGroups = Arrays.asList("user"); // change in the future
+            String jwtTokenString = rsaService.generateToken(user.getUsername(), userGroups, tokenLifetime);
 
             jwtToken.setToken(jwtTokenString);
             jwtToken.setUser(user);
@@ -275,7 +283,7 @@ public class JwtService {
 
             repository.save(jwtToken);
 
-            return jwtToken;
+            return (T) jwtToken;
         } catch (Exception exception) {
             LOGGER.error("Could not create token of type " + jwtTokenType.name() + " for user " + user.getUsername() + "!");
 
@@ -322,7 +330,7 @@ public class JwtService {
 
             deleteJwtToken(refreshTokenRepository, optionalRefreshToken.get());
 
-            JwtTokenWithDeviceId newRefreshToken = (JwtTokenWithDeviceId) createJwtToken(optionalUser.get(), JwtTokenLifetime.REFRESH_TOKEN_LIFESPAN_IN_SECONDS.getLifetime(), refreshTokenRepository, JwtTokenType.REFRESH_TOKEN);
+            JwtTokenWithDeviceId newRefreshToken = createJwtToken(optionalUser.get(), JwtTokenLifetime.REFRESH_TOKEN_LIFESPAN_IN_SECONDS.getLifetime(), refreshTokenRepository, JwtTokenType.REFRESH_TOKEN, true);
             Cookie cookieWithRefreshToken = createCookieWithRefreshToken(newRefreshToken.getToken());
 
             setDeviceIdOnJwtToken(newRefreshToken, deviceId, refreshTokenRepository);
@@ -331,7 +339,7 @@ public class JwtService {
 
             Map<String, String> accessWrappedJwtToken = new HashMap<>();
 
-            accessWrappedJwtToken.put("token", createJwtToken(optionalUser.get(), JwtTokenLifetime.ACCESS_TOKEN_LIFESPAN_IN_SECONDS.getLifetime(), accessTokenRepository, JwtTokenType.ACCESS_TOKEN).getToken());
+            accessWrappedJwtToken.put("token", createJwtToken(optionalUser.get(), JwtTokenLifetime.ACCESS_TOKEN_LIFESPAN_IN_SECONDS.getLifetime(), accessTokenRepository, JwtTokenType.ACCESS_TOKEN, true).getToken());
 
             if (authorization.isPresent()) {
                 try {
@@ -365,7 +373,7 @@ public class JwtService {
         Cookie cookie = new Cookie("refreshToken", refreshToken);
 
         cookie.setHttpOnly(true);
-        cookie.setPath("/user/new-access-token");
+        cookie.setPath("/token/new-access-token");
         cookie.setMaxAge(Math.toIntExact(JwtTokenLifetime.REFRESH_TOKEN_LIFESPAN_IN_SECONDS.getLifetime()));
         cookie.setSecure(true); // TODO check if needed with httpd
 

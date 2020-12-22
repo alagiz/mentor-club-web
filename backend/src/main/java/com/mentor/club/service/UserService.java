@@ -105,7 +105,8 @@ public class UserService {
                             createdUser,
                             JwtTokenLifetime.EMAIL_CONFIRM_TOKEN_LIFESPAN_IN_SECONDS.getLifetime(),
                             emailConfirmTokenRepository,
-                            JwtTokenType.EMAIL_CONFIRM_TOKEN);
+                            JwtTokenType.EMAIL_CONFIRM_TOKEN,
+                            false);
             String confirmationUrl = backendDeploymentUrl + "/user/confirm-email/" + emailConfirmToken.getId();
 
             HttpStatus confirmationEmailSentStatusCode = awsService.sendConfirmationEmail(confirmationUrl, user);
@@ -186,24 +187,26 @@ public class UserService {
 
                 jwtService.deleteAllJwtTokensForUserForDevice(user, deviceId);
 
+                JwtTokenWithDeviceId accessToken = jwtService.createJwtToken(user, JwtTokenLifetime.ACCESS_TOKEN_LIFESPAN_IN_SECONDS.getLifetime(), accessTokenRepository, JwtTokenType.ACCESS_TOKEN, true);
+
+                jwtService.setDeviceIdOnJwtToken(accessToken, deviceId, accessTokenRepository);
+
                 result.setUsername(username);
                 result.setThumbnailPhoto(user.getThumbnailBase64());
-                JwtTokenWithDeviceId accessToken = (JwtTokenWithDeviceId) jwtService.createJwtToken(user, JwtTokenLifetime.ACCESS_TOKEN_LIFESPAN_IN_SECONDS.getLifetime(), accessTokenRepository, JwtTokenType.ACCESS_TOKEN);
-                jwtService.setDeviceIdOnJwtToken(accessToken, deviceId, accessTokenRepository);
                 result.setToken(accessToken.getToken());
-
                 result.setDisplayName(user.getName());
                 result.setThumbnailPhoto(user.getThumbnailBase64());
 
-                response.setJson(result);
-                response.setStatus(HttpStatus.OK);
+                JwtTokenWithDeviceId refreshToken = jwtService.createJwtToken(user, JwtTokenLifetime.REFRESH_TOKEN_LIFESPAN_IN_SECONDS.getLifetime(), refreshTokenRepository, JwtTokenType.REFRESH_TOKEN, true);
 
-                JwtTokenWithDeviceId refreshToken = (JwtTokenWithDeviceId) jwtService.createJwtToken(user, JwtTokenLifetime.REFRESH_TOKEN_LIFESPAN_IN_SECONDS.getLifetime(), refreshTokenRepository, JwtTokenType.REFRESH_TOKEN);
                 jwtService.setDeviceIdOnJwtToken(refreshToken, deviceId, refreshTokenRepository);
                 Cookie cookieWithRefreshToken = jwtService.createCookieWithRefreshToken(refreshToken.getToken());
 
                 httpServletResponse.addCookie(cookieWithRefreshToken);
                 jwtService.addSameSiteCookieAttribute(httpServletResponse);
+
+                response.setJson(result);
+                response.setStatus(HttpStatus.OK);
             } else {
                 response.setStatus(HttpStatus.UNAUTHORIZED);
             }

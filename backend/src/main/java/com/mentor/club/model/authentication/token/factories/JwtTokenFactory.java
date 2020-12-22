@@ -1,23 +1,20 @@
 package com.mentor.club.model.authentication.token.factories;
 
+import com.mentor.club.model.authentication.token.abstracts.AbstractJwtTokenFactory;
 import com.mentor.club.model.authentication.token.abstracts.JwtToken;
-import com.mentor.club.model.authentication.token.concretes.AccessToken;
+import com.mentor.club.model.authentication.token.abstracts.JwtTokenWithDeviceId;
 import com.mentor.club.model.authentication.token.concretes.EmailConfirmToken;
 import com.mentor.club.model.authentication.token.concretes.PasswordResetToken;
-import com.mentor.club.model.authentication.token.concretes.RefreshToken;
 import com.mentor.club.model.authentication.token.enums.JwtTokenType;
+import org.springframework.stereotype.Component;
 
-public final class JwtTokenFactory {
-    public static JwtToken createJwtTokenOfType(JwtTokenType jwtTokenType) {
+@Component
+public final class JwtTokenFactory extends AbstractJwtTokenFactory {
+    @Override
+    public JwtToken getJwtToken(JwtTokenType jwtTokenType) {
         JwtToken jwtToken;
 
         switch (jwtTokenType) {
-            case REFRESH_TOKEN:
-                jwtToken = new RefreshToken(jwtTokenType);
-                break;
-            case ACCESS_TOKEN:
-                jwtToken = new AccessToken(jwtTokenType);
-                break;
             case PASSWORD_RESET_TOKEN:
                 jwtToken = new PasswordResetToken(jwtTokenType);
                 break;
@@ -29,5 +26,10 @@ public final class JwtTokenFactory {
         }
 
         return jwtToken;
+    }
+
+    @Override
+    public JwtTokenWithDeviceId getJwtTokenWithDeviceId(JwtTokenType jwtTokenType) {
+        return null;
     }
 }
