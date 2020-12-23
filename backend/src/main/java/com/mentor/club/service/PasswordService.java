@@ -108,7 +108,7 @@ public class PasswordService {
                 return new ResponseEntity<>(internalResponse.getJson(), internalResponse.getStatus());
             }
 
-            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+            return new ResponseEntity<>(HttpStatus.OK);
         } catch (Exception exception) {
             LOGGER.error("Could not authorize password change for user " + changePasswordRequest.getUsername() + "!Error: " + exception.getMessage());
 
