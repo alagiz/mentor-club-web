@@ -71,16 +71,67 @@ public class PasswordService {
         return new ResponseEntity<>(HttpStatus.OK);
     }
 
+    private ResponseEntity changeForgottenPasswordNegativeFlow(ChangeForgottenPasswordRequest changeForgottenPasswordRequest) {
+        try {
+            Optional<PasswordResetToken> optionalPasswordResetToken = passwordResetTokenRepository.findByToken(changeForgottenPasswordRequest.getPasswordResetToken());
+
+            if (!optionalPasswordResetToken.isPresent()) {
+                return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+            }
+
+            if (optionalPasswordResetToken.get().isExpired()) {
+                return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+            }
+
+            PasswordResetToken passwordResetToken = optionalPasswordResetToken.get();
+            User user = passwordResetToken.getUser();
+
+            if (user == null) {
+                return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+            }
+
+            return new ResponseEntity<>(HttpStatus.OK);
+        } catch (Exception exception) {
+            LOGGER.error("Could not validate password for token " + changeForgottenPasswordRequest.getPasswordResetToken() + "!Error: " + exception.getMessage());
+
+            return new ResponseEntity<>(exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    private ResponseEntity changeForgottenPasswordSuccessfulFlow(ChangeForgottenPasswordRequest changeForgottenPasswordRequest) {
+        InternalResponse internalResponse = new InternalResponse();
+
+        try {
+            Optional<PasswordResetToken> optionalPasswordResetToken = passwordResetTokenRepository.findByToken(changeForgottenPasswordRequest.getPasswordResetToken());
+            PasswordResetToken passwordResetToken = optionalPasswordResetToken.get();
+            User user = passwordResetToken.getUser();
+
+            user.setHashedPassword(hashPassword(changeForgottenPasswordRequest.getNewPassword()));
+            userRepository.save(user);
+
+            internalResponse.setJson("Successfully change forgotten password for user with username " + user.getUsername() + "!");
+            internalResponse.setStatus(HttpStatus.OK);
+
+            return new ResponseEntity<>(internalResponse.getJson(), internalResponse.getStatus());
+        } catch (Exception exception) {
+            internalResponse.setJson("Failed to change forgotten password for password token " + changeForgottenPasswordRequest.getPasswordResetToken() + ". Error: " + exception.getMessage());
+            internalResponse.setStatus(HttpStatus.BAD_REQUEST);
+
+            return new ResponseEntity<>(internalResponse.getJson(), internalResponse.getStatus());
+        }
+    }
+
     public ResponseEntity changeForgottenPassword(ChangeForgottenPasswordRequest changeForgottenPasswordRequest) {
-        ResponseEntity responseEntity = validatePasswordResetToken(changeForgottenPasswordRequest.getPasswordResetToken());
+        ResponseEntity responseEntity = changeForgottenPasswordNegativeFlow(changeForgottenPasswordRequest);
 
-        // TODO actually change password
+        if (!responseEntity.getStatusCode().is2xxSuccessful()) {
+            return responseEntity;
+        }
 
-        return responseEntity;
+        return changeForgottenPasswordSuccessfulFlow(changeForgottenPasswordRequest);
     }
 
     private ResponseEntity changePasswordNegativeFlow(ChangePasswordRequest changePasswordRequest, String authorization) {
-        // TODO add deviceId check
         try {
             ResponseEntity jwtValidationResult = jwtService.validateAccessToken(authorization);
             InternalResponse internalResponse = new InternalResponse();
@@ -146,20 +197,6 @@ public class PasswordService {
         }
 
         return changePasswordSuccessfulFlow(changePasswordRequest);
-    }
-
-    private ResponseEntity validatePasswordResetToken(String token) {
-        Optional<PasswordResetToken> passwordResetToken = passwordResetTokenRepository.findByToken(token);
-
-        if (!passwordResetToken.isPresent()) {
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-        }
-
-        if (passwordResetToken.get().isExpired()) {
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-        }
-
-        return new ResponseEntity<>(HttpStatus.OK);
     }
 
     private PasswordResetToken createPasswordResetTokenForUser(User user) {

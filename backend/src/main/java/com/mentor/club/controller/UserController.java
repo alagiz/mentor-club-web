@@ -64,7 +64,7 @@ public class UserController {
         return userService.confirmEmail(emailConfirmTokenId);
     }
 
-    @PostMapping
+    @GetMapping
     @RequestMapping("/reset-forgotten-password")
     @ApiOperation(value = "Reset password request")
     @ApiResponses(value = {
