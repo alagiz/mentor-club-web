@@ -16,7 +16,7 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/token")
 class JwtController {
-    private final JwtService jwtService;
+    private JwtService jwtService;
 
     public JwtController(JwtService jwtService) {
         this.jwtService = jwtService;
@@ -28,7 +28,7 @@ class JwtController {
             @ApiResponse(code = 200, message = "Valid Token"),
             @ApiResponse(code = 401, message = "Invalid Token"),
     })
-    public ResponseEntity validateJwt(@ApiParam(value = "'Bearer' Token for validation") @RequestHeader(name = "Authorization") String authorization) {
+    public ResponseEntity validateAccessToken(@ApiParam(value = "'Bearer' Token for validation") @RequestHeader(name = "Authorization") String authorization) {
         return jwtService.validateAccessToken(authorization);
     }
 
@@ -39,11 +39,11 @@ class JwtController {
             @ApiResponse(code = 200, message = "Authorized"),
             @ApiResponse(code = 401, message = "Invalid password"),
     })
-    public ResponseEntity getRefreshAndAccessToken(@CookieValue("refreshToken") String refreshTokenCookie,
+    public ResponseEntity getNewAccessAndRefreshToken(@CookieValue("refreshToken") String refreshTokenCookie,
                                                    @RequestHeader(name = "Authorization") Optional<String> authorization,
                                                    @RequestParam UUID deviceId,
                                                    HttpServletResponse response) {
-        return jwtService.getRefreshAndAccessToken(refreshTokenCookie, authorization, deviceId, response);
+        return jwtService.getNewAccessAndRefreshToken(refreshTokenCookie, authorization, deviceId, response);
     }
 
     @GetMapping

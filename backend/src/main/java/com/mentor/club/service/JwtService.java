@@ -359,7 +359,7 @@ public class JwtService {
         }
     }
 
-    public ResponseEntity getRefreshAndAccessToken(String refreshTokenCookie, Optional<String> authorization, UUID deviceId, HttpServletResponse httpServletResponse) {
+    public ResponseEntity getNewAccessAndRefreshToken(String refreshTokenCookie, Optional<String> authorization, UUID deviceId, HttpServletResponse httpServletResponse) {
         ResponseEntity<Object> responseEntity = handleTokenRefreshUnauthorizedFlow(refreshTokenCookie, deviceId);
 
         if (!responseEntity.getStatusCode().is2xxSuccessful()) {
