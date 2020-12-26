@@ -45,4 +45,11 @@ class JwtController {
                                                    HttpServletResponse response) {
         return jwtService.getRefreshAndAccessToken(refreshTokenCookie, authorization, deviceId, response);
     }
+
+    @GetMapping
+    @RequestMapping("/public-key")
+    @ApiOperation(value = "Request the public key")
+    public ResponseEntity getPublicKey() {
+        return jwtService.getPublicKey();
+    }
 }

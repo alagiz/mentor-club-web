@@ -4,7 +4,6 @@ import com.mentor.club.model.authentication.AuthenticationRequest;
 import com.mentor.club.model.password.ChangeForgottenPasswordRequest;
 import com.mentor.club.model.password.ChangePasswordRequest;
 import com.mentor.club.model.user.NewUser;
-import com.mentor.club.service.JwtService;
 import com.mentor.club.service.PasswordService;
 import com.mentor.club.service.UserService;
 import io.swagger.annotations.*;
@@ -21,12 +20,10 @@ import java.util.UUID;
 public class UserController {
     private UserService userService;
     private PasswordService passwordService;
-    private JwtService jwtService;
 
-    public UserController(UserService userService, PasswordService passwordService, JwtService jwtService) {
+    public UserController(UserService userService, PasswordService passwordService) {
         this.userService = userService;
         this.passwordService = passwordService;
-        this.jwtService = jwtService;
     }
 
     @PostMapping
@@ -110,12 +107,5 @@ public class UserController {
                                  @RequestHeader(name = "Authorization") String authorization,
                                  @RequestParam String username) {
         return userService.logout(authorization, username);
-    }
-
-    @GetMapping
-    @RequestMapping("/public-key")
-    @ApiOperation(value = "Request the public key")
-    public ResponseEntity getPublicKey() {
-        return jwtService.getPublicKey();
     }
 }

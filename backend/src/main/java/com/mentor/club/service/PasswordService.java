@@ -133,6 +133,7 @@ public class PasswordService {
 
     private ResponseEntity changePasswordNegativeFlow(ChangePasswordRequest changePasswordRequest, String authorization) {
         try {
+            // TODO check deviceId also
             ResponseEntity jwtValidationResult = jwtService.validateAccessToken(authorization);
             InternalResponse internalResponse = new InternalResponse();
 
