@@ -137,8 +137,9 @@ public class PasswordServiceTest {
 
         Optional<User> userWithGivenEmail = Optional.of(user);
         PasswordResetToken passwordResetToken = new PasswordResetToken(JwtTokenType.PASSWORD_RESET_TOKEN);
-        passwordResetToken.setToken("testToken");
         HttpStatus testHttpStatus = HttpStatus.ACCEPTED;
+
+        passwordResetToken.setToken("testToken");
 
         when(userRepository.findUserByEmail(userEmail)).thenReturn(userWithGivenEmail);
         when(passwordResetTokenRepository.save(any())).thenReturn(passwordResetToken);
