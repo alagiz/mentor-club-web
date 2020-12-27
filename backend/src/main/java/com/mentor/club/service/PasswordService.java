@@ -56,19 +56,25 @@ public class PasswordService {
     }
 
     public ResponseEntity generateResetForgottenPasswordEmail(String email) {
-        Optional<User> userWithGivenEmail = userRepository.findUserByEmail(email);
+        try {
+            Optional<User> userWithGivenEmail = userRepository.findUserByEmail(email);
 
-        if (!userWithGivenEmail.isPresent()) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+            if (!userWithGivenEmail.isPresent()) {
+                return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+            }
+
+            JwtToken passwordResetToken = createPasswordResetTokenForUser(userWithGivenEmail.get());
+            String resetPasswordUrl = backendDeploymentUrl + "/user/change-password?token=" + passwordResetToken.getToken();
+            HttpStatus passwordResetEmailSentStatusCode = awsService.sendPasswordResetEmail(resetPasswordUrl, userWithGivenEmail.get());
+
+            LOGGER.debug("Status code of sending password reset email: " + passwordResetEmailSentStatusCode.toString());
+
+            return new ResponseEntity<>(HttpStatus.OK);
+        } catch (Exception exception) {
+            LOGGER.debug("Failed to generate resetForgottenPasswordEmail for user with email: " + email + ". Message: " + exception.getMessage());
+
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
-
-        JwtToken passwordResetToken = createPasswordResetTokenForUser(userWithGivenEmail.get());
-        String resetPasswordUrl = backendDeploymentUrl + "/user/change-password?token=" + passwordResetToken.getToken();
-        HttpStatus passwordResetEmailSentStatusCode = awsService.sendPasswordResetEmail(resetPasswordUrl, userWithGivenEmail.get());
-
-        LOGGER.debug("Status code of sending password reset email: " + passwordResetEmailSentStatusCode.toString());
-
-        return new ResponseEntity<>(HttpStatus.OK);
     }
 
     private ResponseEntity changeForgottenPasswordNegativeFlow(ChangeForgottenPasswordRequest changeForgottenPasswordRequest) {

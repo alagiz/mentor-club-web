@@ -38,7 +38,7 @@ public class UserControllerTest {
     }
 
     @Test
-    public void test_Authenticate_CallsAuthenticateOfUserService() {
+    public void test_authenticate_callsAuthenticateOfUserService() {
         AuthenticationRequest authenticationRequest = new AuthenticationRequest();
         MockHttpServletResponse httpServletResponse = new MockHttpServletResponse();
 
@@ -48,7 +48,7 @@ public class UserControllerTest {
     }
 
     @Test
-    public void test_CreateNewUser_CallsCreateNewUserOfUserService() {
+    public void test_createNewUser_callsCreateNewUserOfUserService() {
         NewUser newUser = new NewUser();
 
         userController.createNewUser(newUser);
@@ -57,7 +57,7 @@ public class UserControllerTest {
     }
 
     @Test
-    public void test_ConfirmEmail_CallsConfirmEmailOfUserService() {
+    public void test_confirmEmail_callsConfirmEmailOfUserService() {
         UUID emailConfirmTokenId = UUID.randomUUID();
 
         userController.confirmEmail(emailConfirmTokenId);
@@ -66,7 +66,7 @@ public class UserControllerTest {
     }
 
     @Test
-    public void test_GenerateResetForgottenPassword_CallsGenerateResetForgottenPasswordOfPasswordService() {
+    public void test_generateResetForgottenPassword_callsGenerateResetForgottenPasswordOfPasswordService() {
         String userEmail = "test-user-email";
 
         userController.generateResetForgottenPasswordEmail(userEmail);
@@ -75,7 +75,7 @@ public class UserControllerTest {
     }
 
     @Test
-    public void test_ChangeForgottenPassword_CallsChangeForgottenPasswordOfPasswordService() {
+    public void test_changeForgottenPassword_callsChangeForgottenPasswordOfPasswordService() {
         ChangeForgottenPasswordRequest changeForgottenPasswordRequest = new ChangeForgottenPasswordRequest();
 
         userController.changeForgottenPassword(changeForgottenPasswordRequest);
@@ -84,7 +84,7 @@ public class UserControllerTest {
     }
 
     @Test
-    public void test_ChangePassword_CallsChangePasswordOfPasswordService() {
+    public void test_changePassword_callsChangePasswordOfPasswordService() {
         ChangePasswordRequest changePasswordRequest = new ChangePasswordRequest();
         String authorization = "test-authorization";
 
@@ -94,7 +94,7 @@ public class UserControllerTest {
     }
 
     @Test
-    public void test_Logout_CallsLogoutOfUserService() {
+    public void test_logout_callsLogoutOfUserService() {
         String authorization = "";
         String userName = "";
 

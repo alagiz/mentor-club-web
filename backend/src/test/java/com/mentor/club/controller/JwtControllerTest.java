@@ -30,7 +30,7 @@ public class JwtControllerTest {
     }
 
     @Test
-    public void test_ValidateAccessToken_CallsValidateAccessTokenOfJwtService() {
+    public void test_validateAccessToken_callsValidateAccessTokenOfJwtService() {
         String authorization = "test-authorization";
 
         jwtController.validateAccessToken(authorization);
@@ -39,7 +39,7 @@ public class JwtControllerTest {
     }
 
     @Test
-    public void test_GetNewAccessAndRefreshToken_CallsGetNewAccessAndRefreshTokenOfJwtService() {
+    public void test_getNewAccessAndRefreshToken_callsGetNewAccessAndRefreshTokenOfJwtService() {
         Optional<String> authorization = Optional.of("test-authorization");
         String refreshTokenCookie = "test-refresh-token-cookie";
         UUID deviceId = UUID.randomUUID();
@@ -51,7 +51,7 @@ public class JwtControllerTest {
     }
 
     @Test
-    public void test_GetPublicKey_CallsGetPublicKeyOfJwtService() {
+    public void test_getPublicKey_callsGetPublicKeyOfJwtService() {
         jwtController.getPublicKey();
 
         verify(jwtService, times(1)).getPublicKey();
