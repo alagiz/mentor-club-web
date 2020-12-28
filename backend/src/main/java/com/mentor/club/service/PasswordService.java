@@ -121,7 +121,7 @@ public class PasswordService {
             return new ResponseEntity<>(internalResponse.getJson(), internalResponse.getStatus());
         } catch (Exception exception) {
             internalResponse.setJson("Failed to change forgotten password for password token " + changeForgottenPasswordRequest.getPasswordResetToken() + ". Error: " + exception.getMessage());
-            internalResponse.setStatus(HttpStatus.BAD_REQUEST);
+            internalResponse.setStatus(HttpStatus.INTERNAL_SERVER_ERROR);
 
             return new ResponseEntity<>(internalResponse.getJson(), internalResponse.getStatus());
         }

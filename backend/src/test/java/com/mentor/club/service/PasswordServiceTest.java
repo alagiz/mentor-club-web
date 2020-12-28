@@ -158,7 +158,7 @@ public class PasswordServiceTest {
     public void changeForgottenPassword_ifPasswordResetTokenRepositoryThrowsException_returnsResponseWithStatusNotOK() {
         ChangeForgottenPasswordRequest changeForgottenPasswordRequest = new ChangeForgottenPasswordRequest();
 
-        when(passwordResetTokenRepository.findByToken(any())).thenThrow();
+        when(passwordResetTokenRepository.findByToken(any())).thenThrow(new InternalException(HttpStatus.BAD_REQUEST, HttpCallError.FAILED_TO_FIND_TOKEN));
 
         ResponseEntity responseEntity = passwordService.changeForgottenPassword(changeForgottenPasswordRequest);
 
@@ -212,7 +212,7 @@ public class PasswordServiceTest {
         passwordResetToken.setUser(user);
 
         when(passwordResetTokenRepository.findByToken(any())).thenReturn(Optional.of(passwordResetToken));
-        when(userRepository.save(any())).thenThrow();
+        when(userRepository.save(any())).thenThrow(new InternalException(HttpStatus.INTERNAL_SERVER_ERROR, HttpCallError.FAILED_TO_SAVE_TO_DB));
 
         ResponseEntity responseEntity = passwordService.changeForgottenPassword(changeForgottenPasswordRequest);
 
