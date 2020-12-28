@@ -6,11 +6,8 @@ import com.mentor.club.model.error.HttpCallError;
 
 import lombok.Getter;
 
-/**
- * Exception used to indicate that something went wrong inside the task service.
- */
 public class InternalException extends RuntimeException {
-    private static final String DEFAULT_SERVICE_CODE = "TASK_SERVICE";
+    private static final String DEFAULT_SERVICE_CODE = "USER_SERVICE";
     private static final String UNKNOWN_CODE = "UNKNOWN";
 
     /**

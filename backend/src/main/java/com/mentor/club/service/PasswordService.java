@@ -82,18 +82,18 @@ public class PasswordService {
             Optional<PasswordResetToken> optionalPasswordResetToken = passwordResetTokenRepository.findByToken(changeForgottenPasswordRequest.getPasswordResetToken());
 
             if (!optionalPasswordResetToken.isPresent()) {
-                return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+                return new ResponseEntity<>("Password reset token in not present in the db!", HttpStatus.UNAUTHORIZED);
             }
 
             if (optionalPasswordResetToken.get().isExpired()) {
-                return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+                return new ResponseEntity<>("PasswordResetToken is expired!", HttpStatus.BAD_REQUEST);
             }
 
             PasswordResetToken passwordResetToken = optionalPasswordResetToken.get();
             User user = passwordResetToken.getUser();
 
             if (user == null) {
-                return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+                return new ResponseEntity<>("User for password reset token not found!", HttpStatus.NOT_FOUND);
             }
 
             return new ResponseEntity<>(HttpStatus.OK);

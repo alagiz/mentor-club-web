@@ -4,25 +4,26 @@ import com.mentor.club.exception.InternalException;
 import com.mentor.club.model.authentication.token.concretes.PasswordResetToken;
 import com.mentor.club.model.authentication.token.enums.JwtTokenType;
 import com.mentor.club.model.error.HttpCallError;
+import com.mentor.club.model.password.ChangeForgottenPasswordRequest;
 import com.mentor.club.model.user.User;
 import com.mentor.club.repository.IPasswordResetTokenRepository;
 import com.mentor.club.repository.IUserRepository;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.mockito.*;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.TestPropertySource;
 
+import java.time.Instant;
+import java.util.Date;
 import java.util.Optional;
 
 import static org.junit.Assert.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @TestPropertySource(properties = {"backend.deployment.url=test-url"})
 @RunWith(MockitoJUnitRunner.class)
@@ -41,6 +42,9 @@ public class PasswordServiceTest {
 
     @Mock
     private IPasswordResetTokenRepository passwordResetTokenRepository;
+
+    @Captor
+    ArgumentCaptor<User> userArgumentCaptor;
 
     @Before
     public void init() {
@@ -150,4 +154,81 @@ public class PasswordServiceTest {
         assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
     }
 
+    @Test
+    public void test_changeForgottenPassword_ifPasswordResetTokenRepositoryThrowsException_returnsResponseWithStatusNotOK() {
+        ChangeForgottenPasswordRequest changeForgottenPasswordRequest = new ChangeForgottenPasswordRequest();
+
+        when(passwordResetTokenRepository.findByToken(any())).thenThrow();
+
+        ResponseEntity responseEntity = passwordService.changeForgottenPassword(changeForgottenPasswordRequest);
+
+        assertNotEquals(HttpStatus.OK, responseEntity.getStatusCode());
+    }
+
+    @Test
+    public void test_changeForgottenPassword_ifPasswordResetTokenRepositoryCannotFindToken_returnsResponseWithStatusUnauthorized() {
+        ChangeForgottenPasswordRequest changeForgottenPasswordRequest = new ChangeForgottenPasswordRequest();
+
+        when(passwordResetTokenRepository.findByToken(any())).thenReturn(Optional.empty());
+
+        ResponseEntity responseEntity = passwordService.changeForgottenPassword(changeForgottenPasswordRequest);
+
+        assertEquals(HttpStatus.UNAUTHORIZED, responseEntity.getStatusCode());
+    }
+
+    @Test
+    public void test_changeForgottenPassword_ifPasswordResetTokenIsExpired_returnsResponseWithStatusBadRequest() {
+        ChangeForgottenPasswordRequest changeForgottenPasswordRequest = new ChangeForgottenPasswordRequest();
+        PasswordResetToken passwordResetToken = new PasswordResetToken(JwtTokenType.PASSWORD_RESET_TOKEN);
+        passwordResetToken.setExpirationDate(Date.from(Instant.now().minusSeconds(1)));
+
+        when(passwordResetTokenRepository.findByToken(any())).thenReturn(Optional.of(passwordResetToken));
+
+        ResponseEntity responseEntity = passwordService.changeForgottenPassword(changeForgottenPasswordRequest);
+
+        assertEquals(HttpStatus.BAD_REQUEST, responseEntity.getStatusCode());
+    }
+
+    @Test
+    public void test_changeForgottenPassword_ifPasswordResetTokenDoesNotHaveUser_returnsResponseWithStatusNotFound() {
+        ChangeForgottenPasswordRequest changeForgottenPasswordRequest = new ChangeForgottenPasswordRequest();
+        PasswordResetToken passwordResetToken = new PasswordResetToken(JwtTokenType.PASSWORD_RESET_TOKEN);
+        passwordResetToken.setExpirationDate(Date.from(Instant.now().plusSeconds(1000)));
+
+        when(passwordResetTokenRepository.findByToken(any())).thenReturn(Optional.of(passwordResetToken));
+
+        ResponseEntity responseEntity = passwordService.changeForgottenPassword(changeForgottenPasswordRequest);
+
+        assertEquals(HttpStatus.NOT_FOUND, responseEntity.getStatusCode());
+    }
+
+    @Test
+    public void test_changeForgottenPassword_ifThereAreNoFailures_changesPasswordAndReturnsResponseWithStatusOK() {
+        User user = new User();
+        String oldPassword = "test-password";
+        String newPassword = "test-new-password";
+        ChangeForgottenPasswordRequest changeForgottenPasswordRequest = new ChangeForgottenPasswordRequest();
+        PasswordResetToken passwordResetToken = new PasswordResetToken(JwtTokenType.PASSWORD_RESET_TOKEN);
+
+        passwordResetToken.setExpirationDate(Date.from(Instant.now().plusSeconds(1000)));
+        user.setHashedPassword(passwordService.hashPassword(oldPassword));
+        passwordResetToken.setUser(user);
+
+        changeForgottenPasswordRequest.setNewPassword(newPassword);
+
+        when(passwordResetTokenRepository.findByToken(any())).thenReturn(Optional.of(passwordResetToken));
+        when(userRepository.save(any())).thenReturn(user);
+
+        assertTrue(passwordService.isProvidedPasswordCorrect(oldPassword, user.getHashedPassword()));
+
+        ResponseEntity responseEntity = passwordService.changeForgottenPassword(changeForgottenPasswordRequest);
+
+        verify(userRepository, times(1)).save(any());
+        verify(userRepository).save(userArgumentCaptor.capture());
+
+        User updatedUser = userArgumentCaptor.getValue();
+
+        assertTrue(passwordService.isProvidedPasswordCorrect(newPassword, updatedUser.getHashedPassword()));
+        assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+    }
 }
