@@ -203,6 +203,25 @@ public class PasswordServiceTest {
     }
 
     @Test
+    public void test_changeForgottenPassword_ifUserCouldNotBeSaved_returnsResponseWithStatusBadRequest() {
+        User user = new User();
+        ChangeForgottenPasswordRequest changeForgottenPasswordRequest = new ChangeForgottenPasswordRequest();
+        PasswordResetToken passwordResetToken = new PasswordResetToken(JwtTokenType.PASSWORD_RESET_TOKEN);
+
+        passwordResetToken.setExpirationDate(Date.from(Instant.now().plusSeconds(1000)));
+        passwordResetToken.setUser(user);
+
+        when(passwordResetTokenRepository.findByToken(any())).thenReturn(Optional.of(passwordResetToken));
+        when(userRepository.save(any())).thenThrow();
+
+        ResponseEntity responseEntity = passwordService.changeForgottenPassword(changeForgottenPasswordRequest);
+
+        verify(userRepository, times(1)).save(any());
+
+        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, responseEntity.getStatusCode());
+    }
+
+    @Test
     public void test_changeForgottenPassword_ifThereAreNoFailures_changesPasswordAndReturnsResponseWithStatusOK() {
         User user = new User();
         String oldPassword = "test-password";
