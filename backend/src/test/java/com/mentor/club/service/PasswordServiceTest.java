@@ -44,7 +44,7 @@ public class PasswordServiceTest {
     private IPasswordResetTokenRepository passwordResetTokenRepository;
 
     @Captor
-    ArgumentCaptor<User> userArgumentCaptor;
+    private ArgumentCaptor<User> userArgumentCaptor;
 
     @Before
     public void init() {
@@ -52,7 +52,7 @@ public class PasswordServiceTest {
     }
 
     @Test
-    public void test_isProvidedPasswordCorrect_checksPasswordCorrectly() {
+    public void isProvidedPasswordCorrect_checksPasswordCorrectly() {
         String password = "test-password";
         String wrongPassword = "wrong-password";
         String hashedPassword = "$2a$04$/UljyCSLBRCd0cb9H0mCquoR6ZsR68FJe1sXXXzIIwlCAymMyfNZ.";
@@ -62,7 +62,7 @@ public class PasswordServiceTest {
     }
 
     @Test
-    public void test_hashPassword_hashesPassword() {
+    public void hashPassword_hashesPassword() {
         String password = "test-password";
         String hashedPassword = passwordService.hashPassword(password);
 
@@ -70,7 +70,7 @@ public class PasswordServiceTest {
     }
 
     @Test
-    public void test_generateResetForgottenPasswordEmail_ifNoUserIsFound_returnsResponseWithStatusNotFound() {
+    public void generateResetForgottenPasswordEmail_ifNoUserIsFound_returnsResponseWithStatusNotFound() {
         String userEmail = "test-email";
         User user = new User();
 
@@ -86,7 +86,7 @@ public class PasswordServiceTest {
     }
 
     @Test
-    public void test_generateResetForgottenPasswordEmail_ifExceptionInThrownInUserRepository_returnsResponseWithStatusInternalServerError() {
+    public void generateResetForgottenPasswordEmail_ifExceptionInThrownInUserRepository_returnsResponseWithStatusInternalServerError() {
         String userEmail = "test-email";
 
         when(userRepository.findUserByEmail(userEmail)).thenThrow(new InternalException(HttpStatus.BAD_REQUEST, HttpCallError.FAILED_TO_FIND_USER));
@@ -97,7 +97,7 @@ public class PasswordServiceTest {
     }
 
     @Test
-    public void test_generateResetForgottenPasswordEmail_ifExceptionInThrownInPasswordResetTokenRepository_returnsResponseWithStatusInternalServerError() {
+    public void generateResetForgottenPasswordEmail_ifExceptionInThrownInPasswordResetTokenRepository_returnsResponseWithStatusInternalServerError() {
         String userEmail = "test-email";
         User user = new User();
 
@@ -114,7 +114,7 @@ public class PasswordServiceTest {
     }
 
     @Test
-    public void test_generateResetForgottenPasswordEmail_ifExceptionInThrownInAwsService_returnsResponseWithStatusInternalServerError() {
+    public void generateResetForgottenPasswordEmail_ifExceptionInThrownInAwsService_returnsResponseWithStatusInternalServerError() {
         String userEmail = "test-email";
         User user = new User();
 
@@ -133,7 +133,7 @@ public class PasswordServiceTest {
     }
 
     @Test
-    public void test_generateResetForgottenPasswordEmail_ifUserIsFound_returnsResponseWithStatusOK() {
+    public void generateResetForgottenPasswordEmail_ifUserIsFound_returnsResponseWithStatusOK() {
         String userEmail = "test-email";
         User user = new User();
 
@@ -155,7 +155,7 @@ public class PasswordServiceTest {
     }
 
     @Test
-    public void test_changeForgottenPassword_ifPasswordResetTokenRepositoryThrowsException_returnsResponseWithStatusNotOK() {
+    public void changeForgottenPassword_ifPasswordResetTokenRepositoryThrowsException_returnsResponseWithStatusNotOK() {
         ChangeForgottenPasswordRequest changeForgottenPasswordRequest = new ChangeForgottenPasswordRequest();
 
         when(passwordResetTokenRepository.findByToken(any())).thenThrow();
@@ -166,7 +166,7 @@ public class PasswordServiceTest {
     }
 
     @Test
-    public void test_changeForgottenPassword_ifPasswordResetTokenRepositoryCannotFindToken_returnsResponseWithStatusUnauthorized() {
+    public void changeForgottenPassword_ifPasswordResetTokenRepositoryCannotFindToken_returnsResponseWithStatusUnauthorized() {
         ChangeForgottenPasswordRequest changeForgottenPasswordRequest = new ChangeForgottenPasswordRequest();
 
         when(passwordResetTokenRepository.findByToken(any())).thenReturn(Optional.empty());
@@ -177,7 +177,7 @@ public class PasswordServiceTest {
     }
 
     @Test
-    public void test_changeForgottenPassword_ifPasswordResetTokenIsExpired_returnsResponseWithStatusBadRequest() {
+    public void changeForgottenPassword_ifPasswordResetTokenIsExpired_returnsResponseWithStatusBadRequest() {
         ChangeForgottenPasswordRequest changeForgottenPasswordRequest = new ChangeForgottenPasswordRequest();
         PasswordResetToken passwordResetToken = new PasswordResetToken(JwtTokenType.PASSWORD_RESET_TOKEN);
         passwordResetToken.setExpirationDate(Date.from(Instant.now().minusSeconds(1)));
@@ -190,7 +190,7 @@ public class PasswordServiceTest {
     }
 
     @Test
-    public void test_changeForgottenPassword_ifPasswordResetTokenDoesNotHaveUser_returnsResponseWithStatusNotFound() {
+    public void changeForgottenPassword_ifPasswordResetTokenDoesNotHaveUser_returnsResponseWithStatusNotFound() {
         ChangeForgottenPasswordRequest changeForgottenPasswordRequest = new ChangeForgottenPasswordRequest();
         PasswordResetToken passwordResetToken = new PasswordResetToken(JwtTokenType.PASSWORD_RESET_TOKEN);
         passwordResetToken.setExpirationDate(Date.from(Instant.now().plusSeconds(1000)));
@@ -203,7 +203,7 @@ public class PasswordServiceTest {
     }
 
     @Test
-    public void test_changeForgottenPassword_ifUserCouldNotBeSaved_returnsResponseWithStatusBadRequest() {
+    public void changeForgottenPassword_ifUserCouldNotBeSaved_returnsResponseWithStatusBadRequest() {
         User user = new User();
         ChangeForgottenPasswordRequest changeForgottenPasswordRequest = new ChangeForgottenPasswordRequest();
         PasswordResetToken passwordResetToken = new PasswordResetToken(JwtTokenType.PASSWORD_RESET_TOKEN);
@@ -222,7 +222,7 @@ public class PasswordServiceTest {
     }
 
     @Test
-    public void test_changeForgottenPassword_ifThereAreNoFailures_changesPasswordAndReturnsResponseWithStatusOK() {
+    public void changeForgottenPassword_ifThereAreNoFailures_changesPasswordAndReturnsResponseWithStatusOK() {
         User user = new User();
         String oldPassword = "test-password";
         String newPassword = "test-new-password";
