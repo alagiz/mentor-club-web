@@ -108,7 +108,7 @@ public class UserService {
                             emailConfirmTokenRepository,
                             JwtTokenType.EMAIL_CONFIRM_TOKEN,
                             false);
-            String confirmationUrl = backendDeploymentUrl + "/user/confirm-email/" + emailConfirmToken.getId();
+            String confirmationUrl = backendDeploymentUrl + "/user/confirm-email/" + emailConfirmToken.getToken();
 
             HttpStatus confirmationEmailSentStatusCode = awsService.sendConfirmationEmail(confirmationUrl, user);
 
@@ -224,23 +224,28 @@ public class UserService {
         return jwtService.logout(authorization, username);
     }
 
-    public ResponseEntity confirmEmail(UUID emailConfirmTokenAsUuid) {
+    public ResponseEntity confirmEmail(String emailConfirmTokenAsJWToken) {
         try {
-            Optional<EmailConfirmToken> optionalEmailConfirmToken = emailConfirmTokenRepository.findByToken(emailConfirmTokenAsUuid.toString());
+            Optional<EmailConfirmToken> optionalEmailConfirmToken = emailConfirmTokenRepository.findByToken(emailConfirmTokenAsJWToken);
 
-            if (optionalEmailConfirmToken.isPresent()) {
-                EmailConfirmToken emailConfirmToken = optionalEmailConfirmToken.get();
-                User user = emailConfirmToken.getUser();
-                user.setUserStatus(UserStatus.CREATED_CONFIRMED_EMAIL);
-
-                userRepository.save(user);
-            } else {
+            if (!optionalEmailConfirmToken.isPresent()) {
                 return new ResponseEntity<>("Email confirmation token not found in db", HttpStatus.NOT_FOUND);
             }
 
+            EmailConfirmToken emailConfirmToken = optionalEmailConfirmToken.get();
+
+            if (emailConfirmToken.isExpired()) {
+                return new ResponseEntity<>("Email confirmation token is expired", HttpStatus.BAD_REQUEST);
+            }
+
+            User user = emailConfirmToken.getUser();
+
+            user.setUserStatus(UserStatus.CREATED_CONFIRMED_EMAIL);
+            userRepository.save(user);
+
             return new ResponseEntity<>(HttpStatus.OK);
         } catch (Exception exception) {
-            LOGGER.error("Failed to confirm email for emailConfirmToken " + emailConfirmTokenAsUuid + ". Error: " + exception.getMessage());
+            LOGGER.error("Failed to confirm email for emailConfirmToken " + emailConfirmTokenAsJWToken + ". Error: " + exception.getMessage());
 
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }

@@ -60,9 +60,9 @@ public class UserControllerTest {
     public void test_confirmEmail_callsConfirmEmailOfUserService() {
         UUID emailConfirmTokenId = UUID.randomUUID();
 
-        userController.confirmEmail(emailConfirmTokenId);
+        userController.confirmEmail(emailConfirmTokenId.toString());
 
-        verify(userService, times(1)).confirmEmail(emailConfirmTokenId);
+        verify(userService, times(1)).confirmEmail(emailConfirmTokenId.toString());
     }
 
     @Test
