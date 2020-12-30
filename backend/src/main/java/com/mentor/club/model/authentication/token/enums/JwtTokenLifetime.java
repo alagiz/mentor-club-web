@@ -3,7 +3,7 @@ package com.mentor.club.model.authentication.token.enums;
 import lombok.Getter;
 
 public enum JwtTokenLifetime {
-    EMAIL_CONFIRM_TOKEN_LIFESPAN_IN_SECONDS(24L * 3600L),    // 24 hours
+    EMAIL_CONFIRM_TOKEN_LIFESPAN_IN_SECONDS(24L * 3600L),     // 24 hours
     PASSWORD_RESET_TOKEN_LIFESPAN_IN_SECONDS(24L * 3600L),    // 24 hours
     REFRESH_TOKEN_LIFESPAN_IN_SECONDS(30L * 24L * 3600L),     // 30 days
     ACCESS_TOKEN_LIFESPAN_IN_SECONDS(10L * 60L);              // 10 minutes
