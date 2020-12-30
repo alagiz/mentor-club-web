@@ -7,6 +7,7 @@ import com.mentor.club.model.authentication.AuthenticationRequest;
 import com.mentor.club.model.authentication.AuthenticationResult;
 import com.mentor.club.model.authentication.token.abstracts.JwtToken;
 import com.mentor.club.model.authentication.token.abstracts.JwtTokenWithDeviceId;
+import com.mentor.club.model.authentication.token.concretes.EmailConfirmToken;
 import com.mentor.club.model.authentication.token.enums.JwtTokenLifetime;
 import com.mentor.club.model.authentication.token.enums.JwtTokenType;
 import com.mentor.club.model.user.NewUser;
@@ -223,22 +224,23 @@ public class UserService {
         return jwtService.logout(authorization, username);
     }
 
-    public ResponseEntity confirmEmail(UUID userId) {
+    public ResponseEntity confirmEmail(UUID emailConfirmTokenAsUuid) {
         try {
-            Optional<User> optionalUser = userRepository.findById(userId);
+            Optional<EmailConfirmToken> optionalEmailConfirmToken = emailConfirmTokenRepository.findByToken(emailConfirmTokenAsUuid.toString());
 
-            if (optionalUser.isPresent()) {
-                User user = optionalUser.get();
+            if (optionalEmailConfirmToken.isPresent()) {
+                EmailConfirmToken emailConfirmToken = optionalEmailConfirmToken.get();
+                User user = emailConfirmToken.getUser();
                 user.setUserStatus(UserStatus.CREATED_CONFIRMED_EMAIL);
 
                 userRepository.save(user);
             } else {
-                return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+                return new ResponseEntity<>("Email confirmation token not found in db", HttpStatus.NOT_FOUND);
             }
 
             return new ResponseEntity<>(HttpStatus.OK);
         } catch (Exception exception) {
-            LOGGER.error("Failed to confirm email for user with userId " + userId);
+            LOGGER.error("Failed to confirm email for emailConfirmToken " + emailConfirmTokenAsUuid + ". Error: " + exception.getMessage());
 
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
