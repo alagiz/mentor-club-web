@@ -243,11 +243,12 @@ public class UserService {
             user.setUserStatus(UserStatus.CREATED_CONFIRMED_EMAIL);
             userRepository.save(user);
 
-            return new ResponseEntity<>(HttpStatus.OK);
+            return new ResponseEntity<>("Success!", HttpStatus.OK);
         } catch (Exception exception) {
-            LOGGER.error("Failed to confirm email for emailConfirmToken " + emailConfirmTokenAsJWToken + ". Error: " + exception.getMessage());
+            String message = "Failed to confirm email for emailConfirmToken " + emailConfirmTokenAsJWToken + ". Error: " + exception.getMessage();
+            LOGGER.error(message);
 
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity<>(message, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 

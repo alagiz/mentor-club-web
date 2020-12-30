@@ -373,7 +373,7 @@ public class JwtService {
         Cookie cookie = new Cookie("refreshToken", refreshToken);
 
         cookie.setHttpOnly(true);
-        cookie.setPath("/token/new-access-token");
+        cookie.setPath("/web-auth/token/new-access-token");
         cookie.setMaxAge(Math.toIntExact(JwtTokenLifetime.REFRESH_TOKEN_LIFESPAN_IN_SECONDS.getLifetime()));
         cookie.setSecure(true); // TODO check if needed with httpd
 
