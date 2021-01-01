@@ -220,8 +220,8 @@ public class UserService {
         }
     }
 
-    public ResponseEntity logout(String authorization, String username) {
-        return jwtService.logout(authorization, username);
+    public ResponseEntity logout(String authorization, UUID deviceId) {
+        return jwtService.logout(authorization, deviceId);
     }
 
     public ResponseEntity confirmEmail(String emailConfirmTokenAsJWToken) {

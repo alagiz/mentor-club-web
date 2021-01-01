@@ -78,9 +78,9 @@ public class JwtService {
     public ResponseEntity<Object> validateAccessToken(String authorization) {
         DecodedJWT decodedJWT = null;
         String errorMessage = "";
-        String token = authorization.substring(authorization.lastIndexOf(" ") + 1);
 
         try {
+            String token = authorization.substring(authorization.lastIndexOf(" ") + 1);
             decodedJWT = rsaService.decodeToken(token);
         } catch (JWTDecodeException exception) {
             errorMessage = ERROR_MESSAGE_INVALID_TOKEN;
@@ -123,31 +123,32 @@ public class JwtService {
     }
 
     // TODO introduce type
-    ResponseEntity<Object> logout(String authorization, String username) {
-        boolean isActionAllowed = validateAccessToken(authorization).getStatusCode().is2xxSuccessful();
-
-        if (!isActionAllowed) {
-            LOGGER.error("Failed to logout user with username " + username + ". JWT is invalid");
-
-            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
-        }
-
+    ResponseEntity<Object> logout(String authorization, UUID deviceId) {
         try {
-            Optional<User> optionalUser = userRepository.findUserByUsername(username);
+            String token = authorization.substring(authorization.lastIndexOf(" ") + 1);
+            Optional<JwtTokenWithDeviceId> optionalAccessToken = accessTokenRepository.findByTokenAndDeviceId(token, deviceId);
+            boolean isTokenPresent = optionalAccessToken.isPresent();
+            boolean isActionAllowed = validateAccessToken(authorization).getStatusCode().is2xxSuccessful();
 
-            if (optionalUser.isPresent()) {
-                User user = optionalUser.get();
+            if (!isActionAllowed || !isTokenPresent) {
+                LOGGER.error("Failed to logout user with deviceId " + deviceId + ". JWT is invalid");
 
+                return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+            }
+
+            User user = optionalAccessToken.get().getUser();
+
+            if (user != null) {
                 deleteAllJwtTokensForUser(user);
 
                 return new ResponseEntity<>(HttpStatus.OK);
             } else {
-                LOGGER.error("Failed to logout, no user with username " + username + " found!");
+                LOGGER.error("Failed to logout, no user found for deviceId " + deviceId + "!");
 
                 return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
             }
         } catch (Exception exception) {
-            LOGGER.error("Failed to logout user with username " + username + ". Error: " + exception.getMessage());
+            LOGGER.error("Failed to logout user with deviceId " + deviceId + ". Error: " + exception.getMessage());
 
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
@@ -293,7 +294,7 @@ public class JwtService {
 
     private ResponseEntity<Object> handleTokenRefreshUnauthorizedFlow(String refreshTokenCookie, UUID deviceId) {
         try {
-            Optional<RefreshToken> optionalRefreshToken = refreshTokenRepository.findByTokenAndDeviceId(refreshTokenCookie, deviceId);
+            Optional<JwtTokenWithDeviceId> optionalRefreshToken = refreshTokenRepository.findByTokenAndDeviceId(refreshTokenCookie, deviceId);
 
             if (!optionalRefreshToken.isPresent()) {
                 Optional<RefreshToken> optionalRefreshTokenWithoutDeviceId = refreshTokenRepository.findByToken(refreshTokenCookie);
@@ -325,7 +326,7 @@ public class JwtService {
 
     private ResponseEntity handleTokenRefreshAuthorizedFlow(String refreshTokenCookie, Optional<String> authorization, UUID deviceId, HttpServletResponse httpServletResponse) {
         try {
-            Optional<RefreshToken> optionalRefreshToken = refreshTokenRepository.findByTokenAndDeviceId(refreshTokenCookie, deviceId);
+            Optional<JwtTokenWithDeviceId> optionalRefreshToken = refreshTokenRepository.findByTokenAndDeviceId(refreshTokenCookie, deviceId);
             Optional<User> optionalUser = userRepository.findById(optionalRefreshToken.get().getUser().getId());
 
             deleteJwtToken(refreshTokenRepository, optionalRefreshToken.get());

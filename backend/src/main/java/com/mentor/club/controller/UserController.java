@@ -105,7 +105,7 @@ public class UserController {
     })
     public ResponseEntity logout(@ApiParam(value = "Logout user")
                                  @RequestHeader(name = "Authorization") String authorization,
-                                 @RequestParam String username) {
-        return userService.logout(authorization, username);
+                                 @RequestParam UUID deviceId) {
+        return userService.logout(authorization, deviceId);
     }
 }
