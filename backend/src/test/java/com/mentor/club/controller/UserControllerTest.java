@@ -96,10 +96,10 @@ public class UserControllerTest {
     @Test
     public void test_logout_callsLogoutOfUserService() {
         String authorization = "";
-        String userName = "";
+        UUID deviceId = UUID.randomUUID();
 
-        userController.logout(authorization, userName);
+        userController.logout(authorization, deviceId);
 
-        verify(userService, times(1)).logout(authorization, userName);
+        verify(userService, times(1)).logout(authorization, deviceId);
     }
 }

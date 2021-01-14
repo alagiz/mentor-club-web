@@ -7,6 +7,7 @@ import com.mentor.club.exception.InternalException;
 import com.mentor.club.model.ExtendableResult;
 import com.mentor.club.model.InternalResponse;
 import com.mentor.club.model.PublicKeyResponse;
+import com.mentor.club.model.authentication.AuthenticationResult;
 import com.mentor.club.model.authentication.token.abstracts.AbstractJwtTokenFactory;
 import com.mentor.club.model.authentication.token.abstracts.JwtToken;
 import com.mentor.club.model.authentication.token.abstracts.JwtTokenWithDeviceId;
@@ -338,9 +339,14 @@ public class JwtService {
             httpServletResponse.addCookie(cookieWithRefreshToken);
             addSameSiteCookieAttribute(httpServletResponse);
 
-            Map<String, String> accessWrappedJwtToken = new HashMap<>();
+            AuthenticationResult result = new AuthenticationResult();
+            User user = optionalUser.get();
 
-            accessWrappedJwtToken.put("token", createJwtToken(optionalUser.get(), JwtTokenLifetime.ACCESS_TOKEN_LIFESPAN_IN_SECONDS.getLifetime(), accessTokenRepository, JwtTokenType.ACCESS_TOKEN, true).getToken());
+            result.setUsername(user.getUsername());
+            result.setThumbnailPhoto(user.getThumbnailBase64());
+            result.setToken(createJwtToken(optionalUser.get(), JwtTokenLifetime.ACCESS_TOKEN_LIFESPAN_IN_SECONDS.getLifetime(), accessTokenRepository, JwtTokenType.ACCESS_TOKEN, true).getToken());
+            result.setDisplayName(user.getName());
+            result.setThumbnailPhoto(user.getThumbnailBase64());
 
             if (authorization.isPresent()) {
                 try {
@@ -352,7 +358,7 @@ public class JwtService {
                 }
             }
 
-            return new ResponseEntity<>(accessWrappedJwtToken, HttpStatus.OK);
+            return new ResponseEntity<>(result, HttpStatus.OK);
         } catch (Exception exception) {
             LOGGER.error("Could not authorize with refresh token " + refreshTokenCookie + " and deviceId " + deviceId + "!Error: " + exception.getMessage());
 
