@@ -62,6 +62,17 @@ public class UserController {
     }
 
     @GetMapping
+    @RequestMapping("/resend-confirmation-email/{email}")
+    @ApiOperation(value = "Resend confirmation email")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Authorized"),
+            @ApiResponse(code = 404, message = "Email not found"),
+    })
+    public ResponseEntity resendConfirmationEmail(@ApiParam(value = "Confirm email") @PathVariable String email) {
+        return userService.resendConfirmationEmail(email);
+    }
+
+    @GetMapping
     @RequestMapping("/reset-forgotten-password")
     @ApiOperation(value = "Reset password request")
     @ApiResponses(value = {

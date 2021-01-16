@@ -28,6 +28,7 @@ import org.springframework.stereotype.Service;
 
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletResponse;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -82,13 +83,15 @@ public class UserService {
         try {
             if (isEmailAlreadyInUse(newUser.getEmail())) {
                 Optional<User> userWithGivenEmail = userRepository.findUserByEmail(newUser.getEmail());
-
-                if (!userWithGivenEmail.isPresent()) {
-                    throw new InternalException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, INVALID_INPUT);
-                }
-
                 String username = userWithGivenEmail.get().getUsername();
                 String message = "{\"error\":\"email already in use by user with username \'" + username + "\'\"}";
+
+                return new ResponseEntity<>(new Gson().toJson(message), HttpStatus.BAD_REQUEST);
+            }
+
+            if (isUsernameAlreadyInUse(newUser.getUsername())) {
+                Optional<User> userWithGivenEmail = userRepository.findUserByUsername(newUser.getUsername());
+                String message = "{\"error\":\"username \'" + userWithGivenEmail.get().getUsername() + "\' already in use!\"}";
 
                 return new ResponseEntity<>(new Gson().toJson(message), HttpStatus.BAD_REQUEST);
             }
@@ -236,7 +239,7 @@ public class UserService {
             Optional<EmailConfirmToken> optionalEmailConfirmToken = emailConfirmTokenRepository.findByToken(emailConfirmTokenAsJWToken);
 
             if (!optionalEmailConfirmToken.isPresent()) {
-                return new ResponseEntity<>("Email confirmation token not found in db", HttpStatus.NOT_FOUND);
+                return new ResponseEntity<>("Email confirmation token not found in db or email confirmed already!", HttpStatus.NOT_FOUND);
             }
 
             EmailConfirmToken emailConfirmToken = optionalEmailConfirmToken.get();
@@ -247,8 +250,13 @@ public class UserService {
 
             User user = emailConfirmToken.getUser();
 
+            if (user.getUserStatus() == UserStatus.CREATED_CONFIRMED_EMAIL) {
+                return new ResponseEntity<>("Email is already confirmed for this user!", HttpStatus.BAD_REQUEST);
+            }
+
             user.setUserStatus(UserStatus.CREATED_CONFIRMED_EMAIL);
             userRepository.save(user);
+            emailConfirmTokenRepository.delete(emailConfirmToken);
 
             return new ResponseEntity<>("Success!", HttpStatus.OK);
         } catch (Exception exception) {
@@ -263,5 +271,50 @@ public class UserService {
         Optional<User> userWithGivenEmail = userRepository.findUserByEmail(email);
 
         return userWithGivenEmail.isPresent();
+    }
+
+    private boolean isUsernameAlreadyInUse(String username) {
+        Optional<User> userWithGivenUsername = userRepository.findUserByUsername(username);
+
+        return userWithGivenUsername.isPresent();
+    }
+
+    public ResponseEntity resendConfirmationEmail(String email) {
+        try {
+            Optional<User> optionalUser = userRepository.findUserByEmail(email);
+
+            if (!optionalUser.isPresent()) {
+                return new ResponseEntity<>("User with such email not found in db: " + email, HttpStatus.NOT_FOUND);
+            }
+
+            User user = optionalUser.get();
+
+            if (user.getUserStatus() == UserStatus.CREATED_CONFIRMED_EMAIL) {
+                return new ResponseEntity<>("Email is already confirmed for this user!", HttpStatus.BAD_REQUEST);
+            }
+
+            List<EmailConfirmToken> existingEmailConfirmTokensForUser = emailConfirmTokenRepository.findByUserId(user.getId());
+            existingEmailConfirmTokensForUser.forEach(emailConfirmTokenRepository::delete);
+
+            JwtToken emailConfirmToken = jwtService
+                    .createJwtToken(
+                            user,
+                            JwtTokenLifetime.EMAIL_CONFIRM_TOKEN_LIFESPAN_IN_SECONDS.getLifetime(),
+                            emailConfirmTokenRepository,
+                            JwtTokenType.EMAIL_CONFIRM_TOKEN,
+                            false);
+            String confirmationUrl = backendDeploymentUrl + "/user/confirm-email/" + emailConfirmToken.getToken();
+
+            HttpStatus confirmationEmailSentStatusCode = awsService.sendConfirmationEmail(confirmationUrl, user);
+
+            LOGGER.debug("Status code of resending confirmation email: " + confirmationEmailSentStatusCode.toString());
+
+            return new ResponseEntity<>("Success!", HttpStatus.OK);
+        } catch (Exception exception) {
+            String message = "Failed to resend confirmation email for email " + email + ". Error: " + exception.getMessage();
+            LOGGER.error(message);
+
+            return new ResponseEntity<>(message, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 }
