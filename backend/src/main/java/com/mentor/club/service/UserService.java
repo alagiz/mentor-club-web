@@ -151,6 +151,13 @@ public class UserService {
                 return response;
             }
 
+            if (optionalUser.get().getUserStatus() != UserStatus.CREATED_CONFIRMED_EMAIL) {
+                LOGGER.error("User " + username + " needs to confirm email before accessing the app!");
+
+                response.setJson("Unconfirmed email for user with username " + username + "!");
+                response.setStatus(HttpStatus.UNAUTHORIZED);
+            }
+
             if (!passwordService.isProvidedPasswordCorrect(password, optionalUser.get().getHashedPassword())) {
                 LOGGER.error("Incorrect password for user with username " + username + "!");
 
