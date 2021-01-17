@@ -258,6 +258,10 @@ public class UserService {
             userRepository.save(user);
             emailConfirmTokenRepository.delete(emailConfirmToken);
 
+            HttpStatus confirmationEmailSentStatusCode = awsService.sendConfirmationSuccessfulEmail(user);
+
+            LOGGER.debug("Status code of sending confirmation email: " + confirmationEmailSentStatusCode.toString());
+
             return new ResponseEntity<>("Success!", HttpStatus.OK);
         } catch (Exception exception) {
             String message = "Failed to confirm email for emailConfirmToken " + emailConfirmTokenAsJWToken + ". Error: " + exception.getMessage();

@@ -10,6 +10,7 @@ import com.amazonaws.services.lambda.invoke.LambdaFunction;
 import com.amazonaws.services.lambda.model.InvocationType;
 import com.amazonaws.services.lambda.model.InvokeRequest;
 import com.amazonaws.services.lambda.model.InvokeResult;
+import com.mentor.club.model.aws.LambdaRequestSendConfirmationSuccessfulEmail;
 import com.mentor.club.model.user.User;
 import com.mentor.club.model.aws.ILambdaRequest;
 import com.mentor.club.model.aws.LambdaRequestSendEmailToConfirmEmail;
@@ -27,22 +28,36 @@ public class AwsService {
     @Value("${aws.lambda.arn.confirm-email}")
     private String confirmEmailLambdaArn;
 
+    @Value("${aws.lambda.arn.informational-email}")
+    private String informationalEmailLambdaArn;
+
     @Value("${aws.lambda.access-key-id}")
     private String lambdaAccessKeyId;
 
     @Value("${aws.lambda.secret-access-key}")
     private String lambdaSecretAccessKey;
 
-    public HttpStatus sendConfirmationEmail(String confirmationUrl, User user) {
+    HttpStatus sendConfirmationEmail(String confirmationUrl, User user) {
         ILambdaRequest lambdaRequest = new LambdaRequestSendEmailToConfirmEmail(confirmationUrl, user.getEmail(), user.getUsername());
 
         return invokeSendConfirmationEmailLambda(lambdaRequest);
     }
 
-    public HttpStatus sendPasswordResetEmail(String confirmationUrl, User user) {
+    HttpStatus sendConfirmationSuccessfulEmail(User user) {
+        ILambdaRequest lambdaRequest = new LambdaRequestSendConfirmationSuccessfulEmail(user.getEmail(), user.getUsername());
+
+        return invokeSendInformationalEmailLambda(lambdaRequest);
+    }
+
+    HttpStatus sendPasswordResetEmail(String confirmationUrl, User user) {
         ILambdaRequest lambdaRequest = new LambdaRequestSendEmailToResetPassword(confirmationUrl, user.getEmail(), user.getUsername());
 
         return invokeSendConfirmationEmailLambda(lambdaRequest);
+    }
+
+    @LambdaFunction(functionName = "informational")
+    private HttpStatus invokeSendInformationalEmailLambda(ILambdaRequest lambdaRequest) {
+        return invokeLambda(lambdaRequest, informationalEmailLambdaArn);
     }
 
     @LambdaFunction(functionName = "ses")
