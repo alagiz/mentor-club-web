@@ -115,8 +115,12 @@ public class PasswordService {
             user.setHashedPassword(hashPassword(changeForgottenPasswordRequest.getNewPassword()));
             userRepository.save(user);
 
-            internalResponse.setJson("Successfully change forgotten password for user with username " + user.getUsername() + "!");
+            internalResponse.setJson("Successfully changed forgotten password for user with username " + user.getUsername() + "!");
             internalResponse.setStatus(HttpStatus.OK);
+
+            HttpStatus passwordChangedSuccessfullyEmailSentStatusCode = awsService.sendPasswordChangedSuccessfullyEmail(user);
+
+            LOGGER.debug("Status code of sending password changed successfully email: " + passwordChangedSuccessfullyEmailSentStatusCode.toString());
 
             return new ResponseEntity<>(internalResponse.getJson(), internalResponse.getStatus());
         } catch (Exception exception) {
@@ -184,8 +188,12 @@ public class PasswordService {
             user.setHashedPassword(hashPassword(changePasswordRequest.getNewPassword()));
             userRepository.save(user);
 
-            internalResponse.setJson("Successfully change password for user with username " + changePasswordRequest.getUsername() + "!");
+            internalResponse.setJson("Successfully changed password for user with username " + changePasswordRequest.getUsername() + "!");
             internalResponse.setStatus(HttpStatus.OK);
+
+            HttpStatus passwordChangedSuccessfullyEmailSentStatusCode = awsService.sendPasswordChangedSuccessfullyEmail(user);
+
+            LOGGER.debug("Status code of sending password changed successfully email: " + passwordChangedSuccessfullyEmailSentStatusCode.toString());
 
             return new ResponseEntity<>(internalResponse.getJson(), internalResponse.getStatus());
         } catch (Exception exception) {

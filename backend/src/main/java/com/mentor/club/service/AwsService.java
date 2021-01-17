@@ -10,11 +10,8 @@ import com.amazonaws.services.lambda.invoke.LambdaFunction;
 import com.amazonaws.services.lambda.model.InvocationType;
 import com.amazonaws.services.lambda.model.InvokeRequest;
 import com.amazonaws.services.lambda.model.InvokeResult;
-import com.mentor.club.model.aws.LambdaRequestSendConfirmationSuccessfulEmail;
+import com.mentor.club.model.aws.*;
 import com.mentor.club.model.user.User;
-import com.mentor.club.model.aws.ILambdaRequest;
-import com.mentor.club.model.aws.LambdaRequestSendEmailToConfirmEmail;
-import com.mentor.club.model.aws.LambdaRequestSendEmailToResetPassword;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -45,6 +42,12 @@ public class AwsService {
 
     HttpStatus sendConfirmationSuccessfulEmail(User user) {
         ILambdaRequest lambdaRequest = new LambdaRequestSendConfirmationSuccessfulEmail(user.getEmail(), user.getUsername());
+
+        return invokeSendInformationalEmailLambda(lambdaRequest);
+    }
+
+    HttpStatus sendPasswordChangedSuccessfullyEmail(User user) {
+        ILambdaRequest lambdaRequest = new LambdaRequestSendPasswordChangedSuccessfullyEmail(user.getEmail(), user.getUsername());
 
         return invokeSendInformationalEmailLambda(lambdaRequest);
     }

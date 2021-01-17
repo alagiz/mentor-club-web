@@ -4,6 +4,7 @@ aws:
     secret-access-key: ${AWS_SECRET_ACCESS_KEY}
     arn:
       confirm-email: ${AWS_LAMBDA_CONFIRMATION_EMAIL_ARN}
+      informational-email: ${AWS_LAMBDA_INFORMATIONAL_EMAIL_ARN}
 backend:
   deployment:
     url: ${BACKEND_DEPLOYMENT_URL}

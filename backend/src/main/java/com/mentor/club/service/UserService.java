@@ -258,9 +258,9 @@ public class UserService {
             userRepository.save(user);
             emailConfirmTokenRepository.delete(emailConfirmToken);
 
-            HttpStatus confirmationEmailSentStatusCode = awsService.sendConfirmationSuccessfulEmail(user);
+            HttpStatus confirmationSuccessfulEmailSentStatusCode = awsService.sendConfirmationSuccessfulEmail(user);
 
-            LOGGER.debug("Status code of sending confirmation email: " + confirmationEmailSentStatusCode.toString());
+            LOGGER.debug("Status code of sending confirmation email: " + confirmationSuccessfulEmailSentStatusCode.toString());
 
             return new ResponseEntity<>("Success!", HttpStatus.OK);
         } catch (Exception exception) {
