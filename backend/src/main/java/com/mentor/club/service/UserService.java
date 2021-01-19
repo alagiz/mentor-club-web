@@ -158,7 +158,7 @@ public class UserService {
                 LOGGER.error("User " + username + " needs to confirm email before accessing the app!");
 
                 response.setJson("Unconfirmed email for user with username " + username + "!");
-                response.setStatus(HttpStatus.UNAUTHORIZED);
+                response.setStatus(HttpStatus.FORBIDDEN);
             }
 
             if (!passwordService.isProvidedPasswordCorrect(password, optionalUser.get().getHashedPassword())) {
@@ -232,6 +232,27 @@ public class UserService {
 
     public ResponseEntity logout(String authorization, UUID deviceId) {
         return jwtService.logout(authorization, deviceId);
+    }
+
+    public ResponseEntity<Object> deleteUser(String authorization, UUID deviceId) {
+        try {
+            if (!jwtService.areTokenAndDeviceIdValid(authorization, deviceId)) {
+                LOGGER.error("Failed to delete user with deviceId " + deviceId + ". JWT is invalid");
+
+                return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+            }
+
+            Optional<JwtTokenWithDeviceId> optionalAccessToken = jwtService.getOptionalAccessToken(authorization, deviceId);
+            User user = optionalAccessToken.get().getUser();
+
+            userRepository.delete(user);
+
+            return new ResponseEntity<>(HttpStatus.OK);
+        } catch (Exception exception) {
+            LOGGER.error("Failed to logout user with deviceId " + deviceId + ". Error: " + exception.getMessage());
+
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
     public ResponseEntity confirmEmail(String emailConfirmTokenAsJWToken) {

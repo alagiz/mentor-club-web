@@ -119,4 +119,16 @@ public class UserController {
                                  @RequestParam UUID deviceId) {
         return userService.logout(authorization, deviceId);
     }
+
+    @DeleteMapping
+    @ApiOperation(value = "Delete user")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Authorized"),
+            @ApiResponse(code = 401, message = "Unauthorized"),
+    })
+    public ResponseEntity deactivateUser(@ApiParam(value = "Delete user")
+                                 @RequestHeader(name = "Authorization") String authorization,
+                                 @RequestParam UUID deviceId) {
+        return userService.deleteUser(authorization, deviceId);
+    }
 }

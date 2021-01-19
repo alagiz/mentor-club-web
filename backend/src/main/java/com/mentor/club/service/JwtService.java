@@ -123,36 +123,41 @@ public class JwtService {
         return internalResponse;
     }
 
+    Optional<JwtTokenWithDeviceId> getOptionalAccessToken(String authorization, UUID deviceId) {
+        String token = authorization.substring(authorization.lastIndexOf(" ") + 1);
+
+        return accessTokenRepository.findByTokenAndDeviceId(token, deviceId);
+    }
+
     // TODO introduce type
     ResponseEntity<Object> logout(String authorization, UUID deviceId) {
         try {
-            String token = authorization.substring(authorization.lastIndexOf(" ") + 1);
-            Optional<JwtTokenWithDeviceId> optionalAccessToken = accessTokenRepository.findByTokenAndDeviceId(token, deviceId);
-            boolean isTokenPresent = optionalAccessToken.isPresent();
-            boolean isActionAllowed = validateAccessToken(authorization).getStatusCode().is2xxSuccessful();
-
-            if (!isActionAllowed || !isTokenPresent) {
+            if (!areTokenAndDeviceIdValid(authorization, deviceId)) {
                 LOGGER.error("Failed to logout user with deviceId " + deviceId + ". JWT is invalid");
 
                 return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
             }
 
+            Optional<JwtTokenWithDeviceId> optionalAccessToken = getOptionalAccessToken(authorization, deviceId);
             User user = optionalAccessToken.get().getUser();
 
-            if (user != null) {
-                deleteAllJwtTokensForUser(user);
+            deleteAllJwtTokensForUser(user);
 
-                return new ResponseEntity<>(HttpStatus.OK);
-            } else {
-                LOGGER.error("Failed to logout, no user found for deviceId " + deviceId + "!");
-
-                return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-            }
+            return new ResponseEntity<>(HttpStatus.OK);
         } catch (Exception exception) {
             LOGGER.error("Failed to logout user with deviceId " + deviceId + ". Error: " + exception.getMessage());
 
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
+    }
+
+    Boolean areTokenAndDeviceIdValid(String authorization, UUID deviceId) {
+        String token = authorization.substring(authorization.lastIndexOf(" ") + 1);
+        Optional<JwtTokenWithDeviceId> optionalAccessToken = accessTokenRepository.findByTokenAndDeviceId(token, deviceId);
+        boolean isTokenPresent = optionalAccessToken.isPresent();
+        boolean isActionAllowed = validateAccessToken(authorization).getStatusCode().is2xxSuccessful();
+
+        return isActionAllowed && isTokenPresent;
     }
 
     private boolean isAccessTokenWhitelisted(DecodedJWT decodedJWT) {
