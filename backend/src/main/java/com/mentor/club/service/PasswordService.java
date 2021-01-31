@@ -8,6 +8,7 @@ import com.mentor.club.model.authentication.token.enums.JwtTokenType;
 import com.mentor.club.model.password.ChangeForgottenPasswordRequest;
 import com.mentor.club.model.password.ChangePasswordRequest;
 import com.mentor.club.model.user.User;
+import com.mentor.club.model.user.UserStatus;
 import com.mentor.club.repository.IPasswordResetTokenRepository;
 import com.mentor.club.repository.IUserRepository;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -118,6 +119,7 @@ public class PasswordService {
 
             internalResponse.setJson("Successfully changed forgotten password for user with username " + user.getUsername() + "!");
             internalResponse.setStatus(HttpStatus.OK);
+            passwordResetTokenRepository.delete(passwordResetToken);
 
             HttpStatus passwordChangedSuccessfullyEmailSentStatusCode = awsService.sendPasswordChangedSuccessfullyEmail(user);
 
