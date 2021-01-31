@@ -110,10 +110,11 @@ public class UserService {
                             JwtTokenLifetime.EMAIL_CONFIRM_TOKEN_LIFESPAN_IN_SECONDS.getLifetime(),
                             emailConfirmTokenRepository,
                             JwtTokenType.EMAIL_CONFIRM_TOKEN,
-                            false);
+                            false,
+                            true);
             String confirmationUrl = backendDeploymentUrl + "/user/confirm-email/" + emailConfirmToken.getToken();
 
-            HttpStatus confirmationEmailSentStatusCode = awsService.sendConfirmationEmail(confirmationUrl, user);
+            HttpStatus confirmationEmailSentStatusCode = awsService.sendConfirmationEmail(confirmationUrl, user, emailConfirmToken.getToken());
 
             LOGGER.debug("Status code of sending confirmation email: " + confirmationEmailSentStatusCode.toString());
 
@@ -198,7 +199,13 @@ public class UserService {
 
                 jwtService.deleteAllJwtTokensForUserForDevice(user, deviceId);
 
-                JwtTokenWithDeviceId accessToken = jwtService.createJwtToken(user, JwtTokenLifetime.ACCESS_TOKEN_LIFESPAN_IN_SECONDS.getLifetime(), accessTokenRepository, JwtTokenType.ACCESS_TOKEN, true);
+                JwtTokenWithDeviceId accessToken = jwtService.createJwtToken(
+                        user,
+                        JwtTokenLifetime.ACCESS_TOKEN_LIFESPAN_IN_SECONDS.getLifetime(),
+                        accessTokenRepository,
+                        JwtTokenType.ACCESS_TOKEN,
+                        true,
+                        false);
 
                 jwtService.setDeviceIdOnJwtToken(accessToken, deviceId, accessTokenRepository);
 
@@ -208,7 +215,13 @@ public class UserService {
                 result.setDisplayName(user.getName());
                 result.setThumbnailPhoto(user.getThumbnailBase64());
 
-                JwtTokenWithDeviceId refreshToken = jwtService.createJwtToken(user, JwtTokenLifetime.REFRESH_TOKEN_LIFESPAN_IN_SECONDS.getLifetime(), refreshTokenRepository, JwtTokenType.REFRESH_TOKEN, true);
+                JwtTokenWithDeviceId refreshToken = jwtService.createJwtToken(
+                        user,
+                        JwtTokenLifetime.REFRESH_TOKEN_LIFESPAN_IN_SECONDS.getLifetime(),
+                        refreshTokenRepository,
+                        JwtTokenType.REFRESH_TOKEN,
+                        true,
+                        false);
 
                 jwtService.setDeviceIdOnJwtToken(refreshToken, deviceId, refreshTokenRepository);
                 Cookie cookieWithRefreshToken = jwtService.createCookieWithRefreshToken(refreshToken.getToken());
@@ -327,10 +340,11 @@ public class UserService {
                             JwtTokenLifetime.EMAIL_CONFIRM_TOKEN_LIFESPAN_IN_SECONDS.getLifetime(),
                             emailConfirmTokenRepository,
                             JwtTokenType.EMAIL_CONFIRM_TOKEN,
-                            false);
+                            false,
+                            true);
             String confirmationUrl = backendDeploymentUrl + "/user/confirm-email/" + emailConfirmToken.getToken();
 
-            HttpStatus confirmationEmailSentStatusCode = awsService.sendConfirmationEmail(confirmationUrl, user);
+            HttpStatus confirmationEmailSentStatusCode = awsService.sendConfirmationEmail(confirmationUrl, user, emailConfirmToken.getToken());
 
             LOGGER.debug("Status code of resending confirmation email: " + confirmationEmailSentStatusCode.toString());
 

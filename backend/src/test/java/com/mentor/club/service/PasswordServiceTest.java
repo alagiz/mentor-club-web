@@ -125,7 +125,7 @@ public class PasswordServiceTest {
 
         when(userRepository.findUserByEmail(userEmail)).thenReturn(userWithGivenEmail);
         when(passwordResetTokenRepository.save(any())).thenReturn(passwordResetToken);
-        when(awsService.sendPasswordResetEmail(any(), any())).thenThrow(new InternalException(HttpStatus.BAD_REQUEST, HttpCallError.SERVICE_UNAVAILABLE));
+        when(awsService.sendPasswordResetEmail(any(), any(), any())).thenThrow(new InternalException(HttpStatus.BAD_REQUEST, HttpCallError.SERVICE_UNAVAILABLE));
 
         ResponseEntity responseEntity = passwordService.generateResetForgottenPasswordEmail(userEmail);
 
@@ -147,7 +147,7 @@ public class PasswordServiceTest {
 
         when(userRepository.findUserByEmail(userEmail)).thenReturn(userWithGivenEmail);
         when(passwordResetTokenRepository.save(any())).thenReturn(passwordResetToken);
-        when(awsService.sendPasswordResetEmail(any(), any())).thenReturn(testHttpStatus);
+        when(awsService.sendPasswordResetEmail(any(), any(), any())).thenReturn(testHttpStatus);
 
         ResponseEntity responseEntity = passwordService.generateResetForgottenPasswordEmail(userEmail);
 

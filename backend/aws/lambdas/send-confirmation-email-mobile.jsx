@@ -17,9 +17,6 @@ exports.handler = async (event) => {
       </div><div style="margin:10px 0"><strong>Hi ${event.username}!</strong></div>
       <div style="margin:10px 0">${event.messageBody}</div>
       <div style="margin:10px 0">
-        <a href="${event.confirmationUrl}" style="text-decoration:none;background-color:#205081;padding:10px 15px;color:white;display:inline-block" target="_blank" data-saferedirecturl="${event.confirmationUrl}">${event.buttonText}</a>
-      </div>
-      <div style="margin:10px 0">
         
       </div>
       <div style="margin:10px 0">
@@ -27,7 +24,7 @@ exports.handler = async (event) => {
       </div>
       <div style="margin:10px 0;color:grey;font-size:0.9em">
         Thanks,<br>
-        The Mentors
+        The Company
       </div>
     </div>`
                 }

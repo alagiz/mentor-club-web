@@ -34,8 +34,8 @@ public class AwsService {
     @Value("${aws.lambda.secret-access-key}")
     private String lambdaSecretAccessKey;
 
-    HttpStatus sendConfirmationEmail(String confirmationUrl, User user) {
-        ILambdaRequest lambdaRequest = new LambdaRequestSendEmailToConfirmEmail(confirmationUrl, user.getEmail(), user.getUsername());
+    HttpStatus sendConfirmationEmail(String confirmationUrl, User user, String securityCode) {
+        ILambdaRequest lambdaRequest = new LambdaRequestSendEmailToConfirmEmail(confirmationUrl, user.getEmail(), user.getUsername(), securityCode);
 
         return invokeSendConfirmationEmailLambda(lambdaRequest);
     }
@@ -52,8 +52,8 @@ public class AwsService {
         return invokeSendInformationalEmailLambda(lambdaRequest);
     }
 
-    HttpStatus sendPasswordResetEmail(String confirmationUrl, User user) {
-        ILambdaRequest lambdaRequest = new LambdaRequestSendEmailToResetPassword(confirmationUrl, user.getEmail(), user.getUsername());
+    HttpStatus sendPasswordResetEmail(String confirmationUrl, User user, String securityCode) {
+        ILambdaRequest lambdaRequest = new LambdaRequestSendEmailToResetPassword(confirmationUrl, user.getEmail(), user.getUsername(), securityCode);
 
         return invokeSendConfirmationEmailLambda(lambdaRequest);
     }

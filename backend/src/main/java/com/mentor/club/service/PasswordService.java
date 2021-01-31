@@ -10,6 +10,7 @@ import com.mentor.club.model.password.ChangePasswordRequest;
 import com.mentor.club.model.user.User;
 import com.mentor.club.repository.IPasswordResetTokenRepository;
 import com.mentor.club.repository.IUserRepository;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.mindrot.jbcrypt.BCrypt;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -65,7 +66,7 @@ public class PasswordService {
 
             JwtToken passwordResetToken = createPasswordResetTokenForUser(userWithGivenEmail.get());
             String resetPasswordUrl = backendDeploymentUrl + "/user/change-password?token=" + passwordResetToken.getToken();
-            HttpStatus passwordResetEmailSentStatusCode = awsService.sendPasswordResetEmail(resetPasswordUrl, userWithGivenEmail.get());
+            HttpStatus passwordResetEmailSentStatusCode = awsService.sendPasswordResetEmail(resetPasswordUrl, userWithGivenEmail.get(), passwordResetToken.getToken());
 
             LOGGER.debug("Status code of sending password reset email: " + passwordResetEmailSentStatusCode.toString());
 
@@ -215,7 +216,7 @@ public class PasswordService {
     }
 
     private PasswordResetToken createPasswordResetTokenForUser(User user) {
-        String token = UUID.randomUUID().toString();
+        String token = RandomStringUtils.randomAlphanumeric(6).toUpperCase();
 
         PasswordResetToken passwordResetToken = new PasswordResetToken(JwtTokenType.PASSWORD_RESET_TOKEN);
 

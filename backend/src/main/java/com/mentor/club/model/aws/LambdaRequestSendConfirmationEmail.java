@@ -12,6 +12,11 @@ public class LambdaRequestSendConfirmationEmail implements ILambdaRequest {
 
     @Getter
     @Setter
+    @JsonProperty("securityCode")
+    private String securityCode;
+
+    @Getter
+    @Setter
     @JsonProperty("destinationEmail")
     private String destinationEmail;
 
@@ -20,9 +25,10 @@ public class LambdaRequestSendConfirmationEmail implements ILambdaRequest {
     @JsonProperty("username")
     private String username;
 
-    public LambdaRequestSendConfirmationEmail(String confirmationUrl, String destinationEmail, String username) {
+    public LambdaRequestSendConfirmationEmail(String confirmationUrl, String destinationEmail, String username, String securityCode) {
         this.confirmationUrl = confirmationUrl;
         this.destinationEmail = destinationEmail;
         this.username = username;
+        this.securityCode = securityCode;
     }
 }

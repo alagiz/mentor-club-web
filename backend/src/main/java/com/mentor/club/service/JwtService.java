@@ -19,6 +19,7 @@ import com.mentor.club.model.authentication.token.factories.JwtTokenFactory;
 import com.mentor.club.model.authentication.token.factories.JwtWithDeviceIdTokenFactory;
 import com.mentor.club.model.user.User;
 import com.mentor.club.repository.*;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -277,12 +278,13 @@ public class JwtService {
         }
     }
 
-    <T extends JwtToken> T createJwtToken(User user, Long tokenLifetime, IJwtTokenRepository repository, JwtTokenType jwtTokenType, Boolean isWithDeviceId) {
+    <T extends JwtToken> T createJwtToken(User user, Long tokenLifetime, IJwtTokenRepository repository, JwtTokenType jwtTokenType, Boolean isWithDeviceId, Boolean isShortToken) {
         try {
             JwtToken jwtToken = isWithDeviceId ? jwtWithDeviceIdTokenFactory.getJwtTokenWithDeviceId(jwtTokenType) : jwtTokenFactory.getJwtToken(jwtTokenType);
 
             List<String> userGroups = Arrays.asList("user"); // change in the future
             String jwtTokenString = rsaService.generateToken(user.getUsername(), userGroups, tokenLifetime);
+            jwtTokenString = isShortToken ? RandomStringUtils.randomAlphanumeric(6).toUpperCase() : jwtTokenString;
 
             jwtToken.setToken(jwtTokenString);
             jwtToken.setUser(user);
@@ -337,7 +339,13 @@ public class JwtService {
 
             deleteJwtToken(refreshTokenRepository, optionalRefreshToken.get());
 
-            JwtTokenWithDeviceId newRefreshToken = createJwtToken(optionalUser.get(), JwtTokenLifetime.REFRESH_TOKEN_LIFESPAN_IN_SECONDS.getLifetime(), refreshTokenRepository, JwtTokenType.REFRESH_TOKEN, true);
+            JwtTokenWithDeviceId newRefreshToken = createJwtToken(
+                    optionalUser.get(),
+                    JwtTokenLifetime.REFRESH_TOKEN_LIFESPAN_IN_SECONDS.getLifetime(),
+                    refreshTokenRepository,
+                    JwtTokenType.REFRESH_TOKEN,
+                    true,
+                    false);
             Cookie cookieWithRefreshToken = createCookieWithRefreshToken(newRefreshToken.getToken());
 
             setDeviceIdOnJwtToken(newRefreshToken, deviceId, refreshTokenRepository);
@@ -349,7 +357,13 @@ public class JwtService {
 
             result.setUsername(user.getUsername());
             result.setThumbnailPhoto(user.getThumbnailBase64());
-            result.setToken(createJwtToken(optionalUser.get(), JwtTokenLifetime.ACCESS_TOKEN_LIFESPAN_IN_SECONDS.getLifetime(), accessTokenRepository, JwtTokenType.ACCESS_TOKEN, true).getToken());
+            result.setToken(createJwtToken(
+                    optionalUser.get(),
+                    JwtTokenLifetime.ACCESS_TOKEN_LIFESPAN_IN_SECONDS.getLifetime(),
+                    accessTokenRepository,
+                    JwtTokenType.ACCESS_TOKEN,
+                    true,
+                    false).getToken());
             result.setDisplayName(user.getName());
             result.setThumbnailPhoto(user.getThumbnailBase64());
 
