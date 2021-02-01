@@ -129,6 +129,8 @@ public class UserService {
     private InternalResponse handleAuthenticationUnauthorizedFlow(AuthenticationRequest authentication) {
         try {
             InternalResponse response = new InternalResponse();
+            AuthenticationResult result = new AuthenticationResult();
+
             response.setStatus(HttpStatus.OK);
 
             String username = authentication.getUsername();
@@ -158,7 +160,14 @@ public class UserService {
             if (optionalUser.get().getUserStatus() != UserStatus.CREATED_CONFIRMED_EMAIL) {
                 LOGGER.error("User " + username + " needs to confirm email before accessing the app!");
 
-                response.setJson("Unconfirmed email for user with username " + username + "!");
+                User user = optionalUser.get();
+
+                result.setUsername(username);
+                result.setThumbnailPhoto(user.getThumbnailBase64());
+                result.setDisplayName(user.getName());
+                result.setThumbnailPhoto(user.getThumbnailBase64());
+
+                response.setJson(user);
                 response.setStatus(HttpStatus.FORBIDDEN);
             }
 
@@ -268,7 +277,7 @@ public class UserService {
         }
     }
 
-    public ResponseEntity confirmEmail(String emailConfirmTokenAsJWToken) {
+    public ResponseEntity confirmEmail(String emailConfirmTokenAsJWToken, String deviceId) {
         try {
             Optional<EmailConfirmToken> optionalEmailConfirmToken = emailConfirmTokenRepository.findByToken(emailConfirmTokenAsJWToken);
 

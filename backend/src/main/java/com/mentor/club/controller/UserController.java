@@ -57,8 +57,8 @@ public class UserController {
             @ApiResponse(code = 200, message = "Authorized"),
             @ApiResponse(code = 404, message = "EmailConfirmToken id not found"),
     })
-    public ResponseEntity confirmEmail(@ApiParam(value = "Confirm email") @PathVariable String emailConfirmToken) {
-        return userService.confirmEmail(emailConfirmToken);
+    public ResponseEntity confirmEmail(@ApiParam(value = "Confirm email") @PathVariable String emailConfirmToken, @RequestParam String deviceId) {
+        return userService.confirmEmail(emailConfirmToken, deviceId);
     }
 
     @GetMapping
