@@ -4,7 +4,6 @@ import com.mentor.club.model.authentication.AuthenticationRequest;
 import com.mentor.club.model.password.ChangeForgottenPasswordRequest;
 import com.mentor.club.model.password.ChangePasswordRequest;
 import com.mentor.club.model.user.NewUser;
-import com.mentor.club.service.JwtService;
 import com.mentor.club.service.PasswordService;
 import com.mentor.club.service.UserService;
 import org.junit.Before;
@@ -59,10 +58,12 @@ public class UserControllerTest {
     @Test
     public void test_confirmEmail_callsConfirmEmailOfUserService() {
         UUID emailConfirmTokenId = UUID.randomUUID();
+        UUID deviceId = UUID.randomUUID();
+        MockHttpServletResponse httpServletResponse = new MockHttpServletResponse();
 
-        userController.confirmEmail(emailConfirmTokenId.toString());
+        userController.confirmEmail(emailConfirmTokenId.toString(), deviceId, httpServletResponse);
 
-        verify(userService, times(1)).confirmEmail(emailConfirmTokenId.toString());
+        verify(userService, times(1)).confirmEmail(emailConfirmTokenId.toString(), deviceId, httpServletResponse);
     }
 
     @Test

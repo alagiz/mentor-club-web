@@ -28,9 +28,7 @@ import org.springframework.stereotype.Service;
 
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletResponse;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 import static com.mentor.club.model.error.HttpCallError.FAILED_TO_FIND_USER;
 import static com.mentor.club.model.error.HttpCallError.INVALID_INPUT;
@@ -167,7 +165,7 @@ public class UserService {
                 result.setDisplayName(user.getName());
                 result.setThumbnailPhoto(user.getThumbnailBase64());
 
-                response.setJson(user);
+                response.setJson(result);
                 response.setStatus(HttpStatus.FORBIDDEN);
             }
 
@@ -277,7 +275,8 @@ public class UserService {
         }
     }
 
-    public ResponseEntity confirmEmail(String emailConfirmTokenAsJWToken, String deviceId) {
+    public ResponseEntity confirmEmail(String emailConfirmTokenAsJWToken, UUID deviceId, HttpServletResponse httpServletResponse) {
+        // TODO: split into successful and unsuccessful flows
         try {
             Optional<EmailConfirmToken> optionalEmailConfirmToken = emailConfirmTokenRepository.findByToken(emailConfirmTokenAsJWToken);
 
@@ -301,11 +300,38 @@ public class UserService {
             userRepository.save(user);
             emailConfirmTokenRepository.delete(emailConfirmToken);
 
+            JwtTokenWithDeviceId accessToken = jwtService.createJwtToken(
+                    user,
+                    JwtTokenLifetime.ACCESS_TOKEN_LIFESPAN_IN_SECONDS.getLifetime(),
+                    accessTokenRepository,
+                    JwtTokenType.ACCESS_TOKEN,
+                    true,
+                    false);
+
+            jwtService.setDeviceIdOnJwtToken(accessToken, deviceId, accessTokenRepository);
+
+            JwtTokenWithDeviceId refreshToken = jwtService.createJwtToken(
+                    user,
+                    JwtTokenLifetime.REFRESH_TOKEN_LIFESPAN_IN_SECONDS.getLifetime(),
+                    refreshTokenRepository,
+                    JwtTokenType.REFRESH_TOKEN,
+                    true,
+                    false);
+
+            Cookie cookieWithRefreshToken = jwtService.createCookieWithRefreshToken(refreshToken.getToken());
+
+            httpServletResponse.addCookie(cookieWithRefreshToken);
+            jwtService.addSameSiteCookieAttribute(httpServletResponse);
+
             HttpStatus confirmationSuccessfulEmailSentStatusCode = awsService.sendConfirmationSuccessfulEmail(user);
 
             LOGGER.debug("Status code of sending confirmation email: " + confirmationSuccessfulEmailSentStatusCode.toString());
 
-            return new ResponseEntity<>("Success!", HttpStatus.OK);
+            Map<String, String> wrappedAccessToken = new HashMap<>();
+
+            wrappedAccessToken.put("accessToken", accessToken.getToken());
+
+            return new ResponseEntity<>(wrappedAccessToken, HttpStatus.OK);
         } catch (Exception exception) {
             String message = "Failed to confirm email for emailConfirmToken " + emailConfirmTokenAsJWToken + ". Error: " + exception.getMessage();
             LOGGER.error(message);

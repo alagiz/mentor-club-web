@@ -57,8 +57,11 @@ public class UserController {
             @ApiResponse(code = 200, message = "Authorized"),
             @ApiResponse(code = 404, message = "EmailConfirmToken id not found"),
     })
-    public ResponseEntity confirmEmail(@ApiParam(value = "Confirm email") @PathVariable String emailConfirmToken, @RequestParam String deviceId) {
-        return userService.confirmEmail(emailConfirmToken, deviceId);
+    public ResponseEntity confirmEmail(@ApiParam(value = "Confirm email")
+                                       @PathVariable String emailConfirmToken,
+                                       @RequestParam UUID deviceId,
+                                       HttpServletResponse response) {
+        return userService.confirmEmail(emailConfirmToken, deviceId, response);
     }
 
     @GetMapping
@@ -127,8 +130,8 @@ public class UserController {
             @ApiResponse(code = 401, message = "Unauthorized"),
     })
     public ResponseEntity deactivateUser(@ApiParam(value = "Delete user")
-                                 @RequestHeader(name = "Authorization") String authorization,
-                                 @RequestParam UUID deviceId) {
+                                         @RequestHeader(name = "Authorization") String authorization,
+                                         @RequestParam UUID deviceId) {
         return userService.deleteUser(authorization, deviceId);
     }
 }
