@@ -30,6 +30,7 @@ public abstract class JwtToken {
 
     @JsonProperty("user")
     @ManyToOne(targetEntity = User.class, fetch = FetchType.EAGER)
+    @OnDelete(action = OnDeleteAction.CASCADE)
     @JoinColumn(nullable = false, name = "userId", referencedColumnName = "id")
     private User user;
 
