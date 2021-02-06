@@ -22,6 +22,10 @@ public class AuthenticationResult {
     String username;
 
     @JsonProperty
+    @ApiModelProperty(notes = "The email of the user")
+    String email;
+
+    @JsonProperty
     @ApiModelProperty(notes = "A list of groups to which the user belongs to", required = true)
     List<String> group = new ArrayList<>();
 

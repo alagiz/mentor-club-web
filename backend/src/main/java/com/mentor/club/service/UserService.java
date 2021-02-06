@@ -164,6 +164,7 @@ public class UserService {
                 result.setThumbnailPhoto(user.getThumbnailBase64());
                 result.setDisplayName(user.getName());
                 result.setThumbnailPhoto(user.getThumbnailBase64());
+                result.setEmail(user.getEmail());
 
                 response.setJson(result);
                 response.setStatus(HttpStatus.FORBIDDEN);
